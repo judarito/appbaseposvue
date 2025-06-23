@@ -36,6 +36,11 @@
         </v-btn>
       </template>
       <v-list :theme="currentTheme">
+        <v-list-item v-if="user">
+          <v-list-item-title>{{ user.email }}</v-list-item-title>
+          <v-list-item-subtitle>Usuario activo</v-list-item-subtitle>
+        </v-list-item>
+        <v-divider />
         <v-list-item>
           <v-list-item-title>Mi Perfil</v-list-item-title>
         </v-list-item>
@@ -43,7 +48,7 @@
           <v-list-item-title>Configuración</v-list-item-title>
         </v-list-item>
         <v-divider />
-        <v-list-item @click="logout">
+        <v-list-item @click="handleLogout">
           <v-list-item-title>
             <v-icon left>mdi-logout</v-icon>
             Cerrar Sesión
@@ -56,15 +61,18 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAppTheme } from '../composables/useTheme'
+import { useSupabase } from '../composables/useSupabase'
 
 // Definir los eventos que emite este componente
 defineEmits<{
   'toggle-sidebar': []
 }>()
 
-// Usar el composable del tema
+const router = useRouter()
 const { isDarkMode, toggleTheme, currentTheme } = useAppTheme()
+const { user, signOut } = useSupabase()
 
 // Colores dinámicos basados en el tema
 const headerColor = computed(() => {
@@ -80,9 +88,13 @@ const titleClass = computed(() => {
 })
 
 // Función de logout
-const logout = () => {
-  console.log('Cerrando sesión...')
-  // Aquí puedes agregar la lógica de logout
+const handleLogout = async () => {
+  try {
+    await signOut()
+    router.push('/login')
+  } catch (error) {
+    console.error('Error al cerrar sesión:', error)
+  }
 }
 </script>
 
