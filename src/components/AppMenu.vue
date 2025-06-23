@@ -35,11 +35,12 @@ const route = useRoute()
 // Usar el composable del tema
 const { currentTheme } = useAppTheme()
 
-// Items del menú
+// Items del menú - Agregado Tenants
 const menuItems: MenuItem[] = [
   { title: 'Dashboard', icon: 'mdi-view-dashboard', route: '/' },
   { title: 'Usuarios', icon: 'mdi-account-group', route: '/users' },
   { title: 'Productos', icon: 'mdi-package-variant', route: '/products' },
+  { title: 'Tenants', icon: 'mdi-domain', route: '/tenants' },
   { title: 'Reportes', icon: 'mdi-chart-bar', route: '/reports' },
   { title: 'Configuración', icon: 'mdi-cog', route: '/settings' },
 ]

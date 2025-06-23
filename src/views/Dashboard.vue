@@ -12,6 +12,8 @@
               :theme="currentTheme"
               elevation="3"
               class="stat-card"
+              @click="navigateToSection(stat.route)"
+              style="cursor: pointer;"
             >
               <v-card-text>
                 <div class="d-flex align-center">
@@ -44,6 +46,8 @@
               <li>Iconos Material Design</li>
               <li>Modo oscuro/claro con mejor contraste</li>
               <li>Sistema de routing con Vue Router</li>
+              <li>Gestión de Tenants con CRUD completo</li>
+              <li>Autenticación con Supabase</li>
             </ul>
           </v-card-text>
         </v-card>
@@ -54,17 +58,20 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAppTheme } from '../composables/useTheme'
+
+const router = useRouter()
 
 // Usar el composable del tema
 const { currentTheme, isDarkMode } = useAppTheme()
 
-// Datos de ejemplo para las estadísticas
+// Datos de ejemplo para las estadísticas - Sin conexión a base de datos por ahora
 const stats = ref([
-  { title: 'Usuarios', value: '1,234', icon: 'mdi-account-group' },
-  { title: 'Ventas', value: '$45,678', icon: 'mdi-currency-usd' },
-  { title: 'Productos', value: '567', icon: 'mdi-package-variant' },
-  { title: 'Pedidos', value: '89', icon: 'mdi-shopping' },
+  { title: 'Usuarios', value: '1,234', icon: 'mdi-account-group', route: '/users' },
+  { title: 'Ventas', value: '$45,678', icon: 'mdi-currency-usd', route: '/reports' },
+  { title: 'Productos', value: '567', icon: 'mdi-package-variant', route: '/products' },
+  { title: 'Tenants', value: '0', icon: 'mdi-domain', route: '/tenants' },
 ])
 
 // Colores dinámicos para las cards con mejor contraste
@@ -83,6 +90,11 @@ const textClass = computed(() => {
 const subtitleClass = computed(() => {
   return isDarkMode.value ? 'text-blue-lighten-3' : 'text-white'
 })
+
+// Navegar a sección específica
+const navigateToSection = (route: string) => {
+  router.push(route)
+}
 </script>
 
 <style scoped>

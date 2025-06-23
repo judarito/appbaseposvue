@@ -6,6 +6,7 @@ import Users from '../views/Users.vue'
 import Products from '../views/Products.vue'
 import Reports from '../views/Reports.vue'
 import Settings from '../views/Settings.vue'
+import Tenants from '../views/Tenants.vue'
 
 const routes = [
   {
@@ -30,6 +31,12 @@ const routes = [
     path: '/products',
     name: 'Products',
     component: Products,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/tenants',
+    name: 'Tenants',
+    component: Tenants,
     meta: { requiresAuth: true }
   },
   {
