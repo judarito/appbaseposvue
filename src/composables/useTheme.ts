@@ -16,6 +16,11 @@ export function useAppTheme() {
     
     // Guardar preferencia en localStorage
     localStorage.setItem('theme', currentTheme.value)
+    
+    // Emitir evento personalizado para otros componentes
+    window.dispatchEvent(new CustomEvent('theme-changed', { 
+      detail: { theme: currentTheme.value, isDark: isDarkMode.value }
+    }))
   }
 
   // Función para establecer tema
@@ -23,6 +28,11 @@ export function useAppTheme() {
     isDarkMode.value = themeName === 'dark'
     theme.global.name.value = themeName
     localStorage.setItem('theme', themeName)
+    
+    // Emitir evento personalizado
+    window.dispatchEvent(new CustomEvent('theme-changed', { 
+      detail: { theme: themeName, isDark: isDarkMode.value }
+    }))
   }
 
   // Función para inicializar tema desde localStorage
@@ -37,11 +47,17 @@ export function useAppTheme() {
     }
   }
 
+  // Función para obtener la preferencia del sistema
+  const getSystemTheme = () => {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+  }
+
   return {
     isDarkMode: computed(() => isDarkMode.value),
     currentTheme,
     toggleTheme,
     setTheme,
-    initTheme
+    initTheme,
+    getSystemTheme
   }
 }
