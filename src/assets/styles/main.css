@@ -1,0 +1,77 @@
+/* Estilos globales */
+.v-application {
+  font-family: 'Roboto', sans-serif;
+}
+
+/* Espaciado adicional */
+.v-main {
+  padding-top: 64px !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 960px) {
+  .v-navigation-drawer {
+    width: 280px !important;
+  }
+}
+
+/* Transiciones suaves para el cambio de tema */
+.v-application {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.v-app-bar, .v-navigation-drawer, .v-card, .v-list, .v-btn {
+  transition: all 0.3s ease;
+}
+
+/* Mejoras para modo oscuro */
+.v-theme--dark .v-app-bar {
+  background-color: #2d2d2d !important;
+}
+
+.v-theme--dark .v-navigation-drawer {
+  background-color: #1e1e1e !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.v-theme--light .v-navigation-drawer {
+  border-right: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+/* Efectos hover mejorados */
+.v-btn:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.v-theme--dark .v-btn:hover {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Cards mejoradas con mejor contraste */
+.v-card {
+  border-radius: 12px;
+}
+
+.v-theme--dark .v-card {
+  background-color: #2d2d2d;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Colores de texto mejorados para modo oscuro */
+.v-theme--dark .text-blue-lighten-2 {
+  color: #64b5f6 !important;
+}
+
+.v-theme--dark .text-blue-lighten-3 {
+  color: #90caf9 !important;
+}
+
+/* Mejoras en los elementos activos del menú */
+.v-theme--dark .v-list-item--active {
+  background-color: rgba(100, 181, 246, 0.25) !important;
+  color: #64b5f6 !important;
+}
+
+.v-theme--dark .v-list-item--active .v-icon {
+  color: #64b5f6 !important;
+}
