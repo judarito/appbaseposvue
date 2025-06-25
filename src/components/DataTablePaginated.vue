@@ -97,9 +97,9 @@
       </v-data-table>
 
       <!-- Footer de paginación personalizado -->
-      <v-card-actions class="justify-center">
-        <v-row align="center" justify="center">
-          <v-col cols="auto">
+      <v-card-actions class="justify-center pa-4">
+        <v-row align="center" justify="center" no-gutters class="align-center">
+          <v-col cols="auto" class="d-flex align-center">
             <v-select
               :model-value="itemsPerPage"
               :items="itemsPerPageOptions"
@@ -107,10 +107,11 @@
               density="compact"
               variant="outlined"
               @update:model-value="$emit('change-items-per-page', $event)"
-              style="width: 200px"
+              style="width: 200px;"
+              hide-details
             />
           </v-col>
-          <v-col cols="auto">
+          <v-col cols="auto" class="d-flex align-center">
             <v-pagination
               :model-value="currentPage"
               :length="totalPages"
@@ -119,7 +120,7 @@
               :disabled="loading"
             />
           </v-col>
-          <v-col cols="auto">
+          <v-col cols="auto" class="d-flex align-center">
             <span class="text-body-2">
               {{ getPaginationText() }}
             </span>
@@ -254,5 +255,26 @@ const getPaginationText = () => {
 
 .v-chip {
   font-weight: 500;
+}
+
+/* Asegurar alineamiento perfecto de elementos de paginación */
+.v-card-actions .v-row {
+  align-items: center !important;
+}
+
+.v-card-actions .v-col {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Ajuste específico para el select de elementos por página */
+.v-card-actions .v-select {
+  margin-bottom: 0 !important;
+}
+
+/* Espaciado entre elementos */
+.v-card-actions .v-col + .v-col {
+  margin-left: 16px;
 }
 </style>

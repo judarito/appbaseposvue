@@ -1,4 +1,5 @@
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { usePageSizeSettings } from './usePageSizeSettings'
 
 export interface PaginationOptions {
   page: number
@@ -25,21 +26,38 @@ export interface PaginatedService<T> {
 
 export function usePagination<T>(
   service: PaginatedService<T>,
-  initialItemsPerPage: number = 10
+  initialItemsPerPage?: number,
+  viewName?: string
 ) {
+  const { currentDefaultPageSize, setDefaultPageSize, debugLocalStorage } = usePageSizeSettings()
+  
+  // Debug para verificar el estado al inicializar
+  debugLocalStorage()
+  
   // Estado de datos
   const items = ref<T[]>([])
   const loading = ref(false)
   const error = ref<string | null>(null)
   const saving = ref(false)
 
-  // Estado de paginación
+  // Estado de paginación - inicializar con un valor por defecto y actualizar después
   const totalItems = ref(0)
   const currentPage = ref(1)
-  const itemsPerPage = ref(initialItemsPerPage)
+  const itemsPerPage = ref(10) // Valor temporal, se actualizará en initialize
   const sortBy = ref<string>('created_at')
   const sortOrder = ref<'asc' | 'desc'>('desc')
   const searchTerm = ref('')
+
+  // Función para determinar el tamaño inicial de página
+  const getInitialPageSize = () => {
+    if (initialItemsPerPage) {
+      console.log(`📊 Usando tamaño inicial especificado: ${initialItemsPerPage}`)
+      return initialItemsPerPage
+    }
+    const defaultSize = currentDefaultPageSize.value
+    console.log(`📊 Usando tamaño de página por defecto: ${defaultSize}`)
+    return defaultSize
+  }
 
   // Computed
   const totalPages = computed(() => Math.ceil(totalItems.value / itemsPerPage.value))
@@ -90,7 +108,12 @@ export function usePagination<T>(
   // Cambiar tamaño de página
   const changeItemsPerPage = async (newItemsPerPage: number) => {
     currentPage.value = 1 // Reset a primera página
-    await loadData({ page: 1, itemsPerPage: newItemsPerPage })
+    itemsPerPage.value = newItemsPerPage
+    
+    // Guardar como configuración por defecto global
+    setDefaultPageSize(newItemsPerPage)
+    
+    await loadData()
   }
 
   // Cambiar orden
@@ -186,8 +209,49 @@ export function usePagination<T>(
 
   // Inicializar datos
   const initialize = async (options?: Partial<PaginationOptions>) => {
-    await loadData({ page: 1, itemsPerPage: initialItemsPerPage, ...options })
+    // Establecer el tamaño de página correcto al inicializar
+    const correctPageSize = getInitialPageSize()
+    itemsPerPage.value = correctPageSize
+    console.log(`📊 Inicializando con tamaño de página: ${correctPageSize}`)
+    
+    await loadData({ page: 1, itemsPerPage: correctPageSize, ...options })
   }
+
+  // Escuchar cambios de configuración de paginación desde Settings
+  const handlePageSizeChange = (event: CustomEvent) => {
+    const newPageSize = event.detail.pageSize
+    console.log(`📊 Evento page-size-changed recibido: ${newPageSize}`)
+    itemsPerPage.value = newPageSize
+    currentPage.value = 1
+    loadData()
+  }
+
+  const handlePageSizeReset = (event: CustomEvent) => {
+    const defaultPageSize = event.detail.pageSize
+    console.log(`📊 Evento page-size-reset recibido: ${defaultPageSize}`)
+    itemsPerPage.value = defaultPageSize
+    currentPage.value = 1
+    loadData()
+  }
+
+  // Watcher para cambios en configuración por defecto
+  watch(currentDefaultPageSize, (newDefaultSize) => {
+    console.log(`📊 Configuración por defecto cambió a: ${newDefaultSize}`)
+    itemsPerPage.value = newDefaultSize
+    currentPage.value = 1
+    loadData()
+  })
+
+  // Configurar listeners
+  onMounted(() => {
+    window.addEventListener('page-size-changed', handlePageSizeChange as EventListener)
+    window.addEventListener('page-size-reset', handlePageSizeReset as EventListener)
+  })
+
+  onUnmounted(() => {
+    window.removeEventListener('page-size-changed', handlePageSizeChange as EventListener)
+    window.removeEventListener('page-size-reset', handlePageSizeReset as EventListener)
+  })
 
   return {
     // Estado

@@ -132,7 +132,7 @@ const {
   refresh,
   initialize,
   clearError
-} = usePagination<Tenant>(tenantService, 10)
+} = usePagination<Tenant>(tenantService)
 
 // Estado local para dialogs
 const dialogVisible = ref(false)
@@ -204,6 +204,7 @@ const confirmDelete = async () => {
 
 // Inicializar datos al montar el componente
 onMounted(() => {
+  console.log('🚀 Montando TenantsListNew...')
   initialize()
 })
 </script>
