@@ -1,4 +1,5 @@
 import { useSupabase } from '../composables/useSupabase'
+import type { PaginationOptions, PaginatedResponse, PaginatedService } from '../composables/usePagination'
 
 export interface Tenant {
   id?: string
@@ -14,7 +15,7 @@ export interface UpdateTenantData {
   name?: string
 }
 
-export class TenantService {
+export class TenantService implements PaginatedService<Tenant> {
   private supabase
 
   constructor() {
@@ -22,7 +23,47 @@ export class TenantService {
     this.supabase = client
   }
 
-  // Obtener todos los tenants
+  // Obtener tenants con paginación (método requerido por la interfaz)
+  async getPaginated(options: PaginationOptions): Promise<PaginatedResponse<Tenant>> {
+    const { page, itemsPerPage, sortBy = 'created_at', sortOrder = 'desc', search } = options
+    
+    // Calcular offset para la paginación
+    const from = (page - 1) * itemsPerPage
+    const to = from + itemsPerPage - 1
+
+    // Construir query base
+    let query = this.supabase
+      .from('tenants')
+      .select('*', { count: 'exact' })
+
+    // Aplicar filtro de búsqueda si existe
+    if (search && search.trim()) {
+      query = query.ilike('name', `%${search.trim()}%`)
+    }
+
+    // Aplicar ordenamiento
+    query = query.order(sortBy, { ascending: sortOrder === 'asc' })
+
+    // Aplicar paginación
+    query = query.range(from, to)
+
+    const { data, error, count } = await query
+
+    if (error) throw error
+
+    const total = count || 0
+    const totalPages = Math.ceil(total / itemsPerPage)
+
+    return {
+      data: data || [],
+      total,
+      page,
+      itemsPerPage,
+      totalPages
+    }
+  }
+
+  // Obtener todos los tenants (mantener para compatibilidad)
   async getAllTenants(): Promise<Tenant[]> {
     const { data, error } = await this.supabase
       .from('tenants')
@@ -50,8 +91,8 @@ export class TenantService {
     return data
   }
 
-  // Crear nuevo tenant
-  async createTenant(tenantData: CreateTenantData): Promise<Tenant> {
+  // Crear nuevo tenant (método requerido por la interfaz)
+  async create(tenantData: CreateTenantData): Promise<Tenant> {
     const { data, error } = await this.supabase
       .from('tenants')
       .insert({
@@ -65,8 +106,8 @@ export class TenantService {
     return data
   }
 
-  // Actualizar tenant
-  async updateTenant(id: string, tenantData: UpdateTenantData): Promise<Tenant> {
+  // Actualizar tenant (método requerido por la interfaz)
+  async update(id: string, tenantData: UpdateTenantData): Promise<Tenant> {
     const { data, error } = await this.supabase
       .from('tenants')
       .update(tenantData)
@@ -78,8 +119,8 @@ export class TenantService {
     return data
   }
 
-  // Eliminar tenant
-  async deleteTenant(id: string): Promise<void> {
+  // Eliminar tenant (método requerido por la interfaz)
+  async delete(id: string): Promise<void> {
     const { error } = await this.supabase
       .from('tenants')
       .delete()
@@ -115,6 +156,23 @@ export class TenantService {
 
     if (error) throw error
     return (data?.length || 0) > 0
+  }
+
+  // Métodos legacy para compatibilidad hacia atrás
+  async getTenantsPaginated(options: PaginationOptions): Promise<PaginatedResponse<Tenant>> {
+    return this.getPaginated(options)
+  }
+
+  async createTenant(tenantData: CreateTenantData): Promise<Tenant> {
+    return this.create(tenantData)
+  }
+
+  async updateTenant(id: string, tenantData: UpdateTenantData): Promise<Tenant> {
+    return this.update(id, tenantData)
+  }
+
+  async deleteTenant(id: string): Promise<void> {
+    return this.delete(id)
   }
 }
 

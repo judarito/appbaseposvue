@@ -26,7 +26,7 @@
     <v-card-text>
       <!-- Barra de búsqueda -->
       <v-text-field
-        v-model="searchTerm"
+        v-model="localSearchTerm"
         label="Buscar tenants..."
         prepend-inner-icon="mdi-magnify"
         variant="outlined"
@@ -35,12 +35,20 @@
         class="mb-4"
       />
 
-      <!-- Estadísticas -->
+      <!-- Estadísticas y Debug Info -->
       <v-row class="mb-4">
         <v-col>
           <v-chip color="primary" variant="tonal">
             <v-icon start>mdi-counter</v-icon>
-            Total: {{ tenantsCount }}
+            Mostrando: {{ tenants.length }} de {{ totalCount }}
+          </v-chip>
+          <v-chip color="info" variant="tonal" class="ml-2">
+            <v-icon start>mdi-file-multiple</v-icon>
+            Página: {{ currentPage }} de {{ totalPages }}
+          </v-chip>
+          <v-chip color="success" variant="tonal" class="ml-2">
+            <v-icon start>mdi-format-list-numbered</v-icon>
+            Por página: {{ itemsPerPage }}
           </v-chip>
         </v-col>
       </v-row>
@@ -60,13 +68,14 @@
         {{ error }}
       </v-alert>
 
-      <!-- Lista de tenants -->
+      <!-- Lista de tenants con paginación server-side -->
       <v-data-table
         :headers="headers"
         :items="tenants"
         :loading="loading"
         item-key="id"
         class="elevation-1"
+        hide-default-footer
       >
         <template v-slot:item.name="{ item }">
           <div class="d-flex align-center">
@@ -101,11 +110,46 @@
         <template v-slot:no-data>
           <div class="text-center pa-4">
             <v-icon size="64" color="grey">mdi-domain-off</v-icon>
-            <p class="text-h6 mt-2">No hay tenants</p>
-            <p class="text-body-2">Crea tu primer tenant para comenzar</p>
+            <p class="text-h6 mt-2">
+              {{ localSearchTerm ? 'No se encontraron tenants' : 'No hay tenants' }}
+            </p>
+            <p class="text-body-2">
+              {{ localSearchTerm ? 'Intenta con otro término de búsqueda' : 'Crea tu primer tenant para comenzar' }}
+            </p>
           </div>
         </template>
       </v-data-table>
+
+      <!-- Footer de paginación personalizado -->
+      <v-card-actions class="justify-center">
+        <v-row align="center" justify="center">
+          <v-col cols="auto">
+            <v-select
+              :model-value="itemsPerPage"
+              :items="[5, 10, 25, 50]"
+              label="Elementos por página"
+              density="compact"
+              variant="outlined"
+              @update:model-value="(value) => changeItemsPerPage(value)"
+              style="width: 200px"
+            />
+          </v-col>
+          <v-col cols="auto">
+            <v-pagination
+              :model-value="currentPage"
+              :length="totalPages"
+              :total-visible="5"
+              @update:model-value="(page) => loadPage(page)"
+              :disabled="loading"
+            />
+          </v-col>
+          <v-col cols="auto">
+            <span class="text-body-2">
+              {{ `${((currentPage - 1) * itemsPerPage) + 1}-${Math.min(currentPage * itemsPerPage, totalCount)} de ${totalCount}` }}
+            </span>
+          </v-col>
+        </v-row>
+      </v-card-actions>
     </v-card-text>
 
     <!-- Dialog para crear/editar tenant -->
@@ -172,16 +216,25 @@ const {
   saving,
   error,
   hasError,
-  tenantsCount,
+  totalCount,
+  totalPages,
+  currentPage,
+  itemsPerPage,
+  sortBy,
+  sortOrder,
+  searchTerm,
   loadTenants,
-  deleteTenant,
+  loadPage,
+  changeItemsPerPage,
+  changeSorting,
   searchTenants,
+  deleteTenant,
   clearError,
   refreshTenants
 } = useTenants()
 
 // Estado local
-const searchTerm = ref('')
+const localSearchTerm = ref('')
 const dialogVisible = ref(false)
 const dialogMode = ref<'create' | 'edit'>('create')
 const selectedTenant = ref<Tenant | null>(null)
@@ -190,14 +243,14 @@ const tenantToDelete = ref<Tenant | null>(null)
 
 // Headers de la tabla
 const headers = [
-  { title: 'Nombre', key: 'name', align: 'start' as const },
-  { title: 'Fecha de Creación', key: 'created_at', align: 'start' as const },
+  { title: 'Nombre', key: 'name', align: 'start' as const, sortable: true },
+  { title: 'Fecha de Creación', key: 'created_at', align: 'start' as const, sortable: true },
   { title: 'Acciones', key: 'actions', align: 'center' as const, sortable: false }
 ]
 
 // Búsqueda con debounce
-const debouncedSearch = debounce((term: string) => {
-  searchTenants(term || '')
+const debouncedSearch = debounce((value: string) => {
+  searchTenants(value || '')
 }, 300)
 
 // Refrescar datos manualmente
@@ -262,7 +315,7 @@ const confirmDelete = async () => {
 
 // Cargar tenants al montar el componente
 onMounted(() => {
-  loadTenants()
+  loadTenants({ page: 1, itemsPerPage: 10 })
 })
 </script>
 
