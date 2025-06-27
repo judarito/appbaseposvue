@@ -32,27 +32,56 @@
           :color="iconColor"
           variant="text"
         >
-          <v-icon>mdi-account-circle</v-icon>
+          <v-avatar size="32" color="primary">
+            <v-icon v-if="!user">mdi-account-circle</v-icon>
+            <span v-else>{{ user.username.charAt(0).toUpperCase() }}</span>
+          </v-avatar>
         </v-btn>
       </template>
-      <v-list :theme="currentTheme">
+      <v-list :theme="currentTheme" min-width="250">
         <v-list-item v-if="user">
-          <v-list-item-title>{{ user.email }}</v-list-item-title>
-          <v-list-item-subtitle>Usuario activo</v-list-item-subtitle>
+          <template v-slot:prepend>
+            <v-avatar color="primary">
+              <span>{{ user.username.charAt(0).toUpperCase() }}</span>
+            </v-avatar>
+          </template>
+          <v-list-item-title>{{ user.username }}</v-list-item-title>
+          <v-list-item-subtitle>
+            <div class="d-flex flex-column">
+              <span v-if="currentTenant">
+                <v-icon size="small">mdi-domain</v-icon>
+                {{ currentTenant.name }}
+              </span>
+              <span v-if="currentRole">
+                <v-icon size="small">mdi-account-key</v-icon>
+                {{ currentRole.name }}
+              </span>
+            </div>
+          </v-list-item-subtitle>
+        </v-list-item>
+        <v-list-item v-else>
+          <v-list-item-title>Usuario no identificado</v-list-item-title>
+          <v-list-item-subtitle>Sin información de sesión</v-list-item-subtitle>
         </v-list-item>
         <v-divider />
-        <v-list-item>
+        <v-list-item @click="goToProfile">
+          <template v-slot:prepend>
+            <v-icon>mdi-account</v-icon>
+          </template>
           <v-list-item-title>Mi Perfil</v-list-item-title>
         </v-list-item>
-        <v-list-item>
+        <v-list-item @click="goToSettings">
+          <template v-slot:prepend>
+            <v-icon>mdi-cog</v-icon>
+          </template>
           <v-list-item-title>Configuración</v-list-item-title>
         </v-list-item>
         <v-divider />
         <v-list-item @click="handleLogout">
-          <v-list-item-title>
-            <v-icon left>mdi-logout</v-icon>
-            Cerrar Sesión
-          </v-list-item-title>
+          <template v-slot:prepend>
+            <v-icon>mdi-logout</v-icon>
+          </template>
+          <v-list-item-title>Cerrar Sesión</v-list-item-title>
         </v-list-item>
       </v-list>
     </v-menu>
@@ -63,7 +92,7 @@
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAppTheme } from '../composables/useTheme'
-import { useSupabase } from '../composables/useSupabase'
+import { useAuth } from '../composables/useAuth'
 
 // Definir los eventos que emite este componente
 defineEmits<{
@@ -72,7 +101,7 @@ defineEmits<{
 
 const router = useRouter()
 const { isDarkMode, toggleTheme, currentTheme } = useAppTheme()
-const { user, signOut } = useSupabase()
+const { user, currentTenant, currentRole, logout } = useAuth()
 
 // Colores dinámicos basados en el tema
 const headerColor = computed(() => {
@@ -87,10 +116,19 @@ const titleClass = computed(() => {
   return isDarkMode.value ? 'text-white' : 'text-white'
 })
 
+// Navegación
+const goToProfile = () => {
+  router.push('/profile')
+}
+
+const goToSettings = () => {
+  router.push('/settings')
+}
+
 // Función de logout
 const handleLogout = async () => {
   try {
-    await signOut()
+    await logout()
     router.push('/login')
   } catch (error) {
     console.error('Error al cerrar sesión:', error)

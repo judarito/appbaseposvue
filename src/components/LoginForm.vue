@@ -119,11 +119,13 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { useAuth } from '../composables/useAuth'
 import { useSupabase } from '../composables/useSupabase'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
-const { signIn, signUp, loading } = useSupabase()
+const { signUp } = useSupabase() // Solo para registro
+const { login, userLoading } = useAuth() // Para login con carga de usuario
 
 // Estado del formulario
 const formRef = ref()
@@ -138,6 +140,9 @@ const errorMessage = ref('')
 const successMessage = ref('')
 const emailError = ref('')
 const passwordError = ref('')
+
+// Usar loading del auth para login, y loading local para registro
+const loading = computed(() => isSignUp.value ? false : userLoading.value)
 
 // Reglas de validación
 const emailRules = [
@@ -207,8 +212,8 @@ const handleLogin = async () => {
       }, 3000)
       
     } else {
-      // Login
-      await signIn(email.value, password.value)
+      // Login con carga de información del usuario
+      await login(email.value, password.value)
       successMessage.value = 'Inicio de sesión exitoso'
       
       // Redirigir al dashboard
@@ -228,6 +233,8 @@ const handleLogin = async () => {
       errorMessage.value = 'Debes confirmar tu email antes de iniciar sesión.'
     } else if (error.message.includes('Too many requests')) {
       errorMessage.value = 'Demasiados intentos. Espera un momento antes de intentar nuevamente.'
+    } else if (error.message.includes('Usuario no encontrado en el sistema')) {
+      errorMessage.value = 'Tu cuenta no está configurada en el sistema. Contacta al administrador.'
     } else {
       errorMessage.value = error.message || 'Error en la autenticación'
     }
