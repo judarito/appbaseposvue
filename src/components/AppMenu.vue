@@ -1,7 +1,7 @@
 <template>
   <v-list nav :theme="currentTheme">
     <v-list-item
-      v-for="item in menuItems"
+      v-for="item in filteredMenuItems"
       :key="item.title"
       :prepend-icon="item.icon"
       :title="item.title"
@@ -16,12 +16,8 @@
 import { computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAppTheme } from '../composables/useTheme'
-
-interface MenuItem {
-  title: string
-  icon: string
-  route: string
-}
+import { useAuth } from '../composables/useAuth'
+import type { MenuItem } from '../types'
 
 // Emits
 const emit = defineEmits<{
@@ -35,15 +31,38 @@ const route = useRoute()
 // Usar el composable del tema
 const { currentTheme } = useAppTheme()
 
-// Items del menú - Agregado Tenants
+// Usar el composable de autenticación para verificar roles
+const { isSuperAdmin, hasRole } = useAuth()
+
+// Items del menú con roles requeridos
 const menuItems: MenuItem[] = [
   { title: 'Dashboard', icon: 'mdi-view-dashboard', route: '/' },
   { title: 'Usuarios', icon: 'mdi-account-group', route: '/users' },
   { title: 'Productos', icon: 'mdi-package-variant', route: '/products' },
-  { title: 'Tenants', icon: 'mdi-domain', route: '/tenants' },
+  { title: 'Tenants', icon: 'mdi-domain', route: '/tenants', requiredRole: 'SUPERADMIN' },
   { title: 'Reportes', icon: 'mdi-chart-bar', route: '/reports' },
   { title: 'Configuración', icon: 'mdi-cog', route: '/settings' },
 ]
+
+// Filtrar items del menú basado en roles
+const filteredMenuItems = computed(() => {
+  return menuItems.filter(item => {
+    // Si no tiene rol requerido, siempre mostrar
+    if (!item.requiredRole) return true
+    
+    // Verificar rol específico
+    switch (item.requiredRole) {
+      case 'SUPERADMIN':
+        return isSuperAdmin.value
+      case 'ADMIN':
+        return hasRole.value('ADMIN') || isSuperAdmin.value
+      case 'TENANT_ADMIN':
+        return hasRole.value('TENANT_ADMIN') || hasRole.value('ADMIN') || isSuperAdmin.value
+      default:
+        return hasRole.value(item.requiredRole)
+    }
+  })
+})
 
 // Verificar si la ruta está activa
 const isActive = (itemRoute: string) => {

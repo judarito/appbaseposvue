@@ -37,7 +37,10 @@ const routes = [
     path: '/tenants',
     name: 'Tenants',
     component: Tenants,
-    meta: { requiresAuth: true }
+    meta: { 
+      requiresAuth: true,
+      requiresRole: 'SUPERADMIN'
+    }
   },
   {
     path: '/reports',

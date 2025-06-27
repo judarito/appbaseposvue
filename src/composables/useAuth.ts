@@ -157,9 +157,14 @@ export function useAuth() {
     return currentRole.value.permissions.includes(permission)
   }
 
+  // Función para verificar si es SUPERADMIN
+  const isSuperAdmin = computed(() => {
+    return hasRole.value('SUPERADMIN')
+  })
+
   // Función para verificar si es administrador del sistema
   const isSystemAdmin = computed(() => {
-    return hasRole.value('admin') || hasRole.value('super_admin')
+    return hasRole.value('admin') || hasRole.value('super_admin') || isSuperAdmin.value
   })
 
   // Función para verificar si es administrador del tenant
@@ -178,6 +183,7 @@ export function useAuth() {
 
     // Computed
     hasRole,
+    isSuperAdmin,
     isSystemAdmin,
     isTenantAdmin,
 
