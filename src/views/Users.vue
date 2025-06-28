@@ -88,20 +88,45 @@
     </DataTablePaginated>
 
     <!-- Dialog para crear/editar usuario -->
-    <v-dialog v-model="dialogVisible" max-width="600px">
+    <v-dialog v-model="dialogVisible" max-width="800px" persistent>
       <v-card>
-        <v-card-title>
+        <v-card-title class="d-flex align-center">
+          <v-icon class="mr-3">
+            {{ dialogMode === 'create' ? 'mdi-account-plus' : 'mdi-account-edit' }}
+          </v-icon>
           {{ dialogMode === 'create' ? 'Crear Usuario' : 'Editar Usuario' }}
         </v-card-title>
+        
         <v-card-text>
-          <!-- Aquí iría el formulario de usuario -->
-          <p>Formulario de usuario (por implementar)</p>
+          <UserForm
+            ref="userFormRef"
+            :mode="dialogMode"
+            :initial-data="selectedUser"
+            :loading="saving"
+            @submit="handleUserSubmit"
+            @cancel="closeDialog"
+          />
         </v-card-text>
+        
         <v-card-actions>
           <v-spacer />
-          <v-btn text @click="closeDialog">Cancelar</v-btn>
-          <v-btn color="primary" @click="handleUserSaved">
-            {{ dialogMode === 'create' ? 'Crear' : 'Actualizar' }}
+          <v-btn 
+            text 
+            @click="closeDialog"
+            :disabled="saving"
+          >
+            Cancelar
+          </v-btn>
+          <v-btn 
+            color="primary" 
+            @click="submitForm"
+            :loading="saving"
+            :disabled="saving"
+          >
+            <v-icon start>
+              {{ dialogMode === 'create' ? 'mdi-plus' : 'mdi-content-save' }}
+            </v-icon>
+            {{ dialogMode === 'create' ? 'Crear Usuario' : 'Actualizar Usuario' }}
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -135,9 +160,10 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { usePagination } from '../composables/usePagination'
-import { userServicePaginated } from '../services/userService'
-import type { UserWithRelations } from '../services/userService'
+import { userService, userServicePaginated } from '../services/userService'
+import type { UserWithRelations, CreateUserData, UpdateUserData } from '../services/userService'
 import DataTablePaginated from '../components/DataTablePaginated.vue'
+import UserForm from '../components/UserForm.vue'
 
 // Usar el composable genérico de paginación
 const {
@@ -166,6 +192,7 @@ const dialogMode = ref<'create' | 'edit'>('create')
 const selectedUser = ref<UserWithRelations | null>(null)
 const deleteDialog = ref(false)
 const userToDelete = ref<UserWithRelations | null>(null)
+const userFormRef = ref()
 
 // Headers de la tabla
 const headers = [
@@ -205,9 +232,45 @@ const openEditDialog = (user: UserWithRelations) => {
 const closeDialog = () => {
   dialogVisible.value = false
   selectedUser.value = null
+  // Resetear el formulario si existe
+  if (userFormRef.value) {
+    userFormRef.value.resetForm()
+  }
 }
 
-// Manejar usuario guardado
+// Manejar envío del formulario desde UserForm
+const handleUserSubmit = async (userData: CreateUserData | UpdateUserData) => {
+  console.log('📝 Enviando datos del usuario:', userData)
+  
+  try {
+    if (dialogMode.value === 'create') {
+      console.log('🆕 Creando nuevo usuario...')
+      await userService.createUser(userData as CreateUserData)
+      console.log('✅ Usuario creado exitosamente')
+    } else if (selectedUser.value) {
+      console.log('✏️ Actualizando usuario existente...')
+      await userService.updateUser(selectedUser.value.id, userData as UpdateUserData)
+      console.log('✅ Usuario actualizado exitosamente')
+    }
+    
+    // Cerrar dialog y refrescar datos
+    closeDialog()
+    await refresh()
+  } catch (error: any) {
+    console.error('❌ Error guardando usuario:', error)
+    // El error se manejará en el UserForm
+  }
+}
+
+// Enviar formulario (llamado desde el botón del dialog)
+const submitForm = async () => {
+  if (userFormRef.value) {
+    // Trigger the submit method on the UserForm
+    await userFormRef.value.handleSubmit()
+  }
+}
+
+// Manejar usuario guardado (legacy, puede ser eliminado)
 const handleUserSaved = async () => {
   closeDialog()
   await refresh()

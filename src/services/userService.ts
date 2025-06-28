@@ -5,6 +5,7 @@ export interface User {
   tenant_id: string // UUID del tenant asociado
   username: string // Username del usuario
   role_id: string // UUID del rol asociado
+  email?: string // Email del usuario (para mostrar, no se almacena en users)
   created_at?: string
   updated_at?: string
 }
@@ -22,16 +23,18 @@ export interface UserWithRelations extends User {
 }
 
 export interface CreateUserData {
-  id: string // UUID del usuario de autenticación
+  email: string // Email para crear en Supabase Auth
+  password: string // Password para crear en Supabase Auth
+  username: string // Username para la tabla users
   tenant_id: string
-  username: string
   role_id: string
 }
 
 export interface UpdateUserData {
-  tenant_id?: string
   username?: string
+  tenant_id?: string
   role_id?: string
+  email?: string // Para actualizar en Supabase Auth si es necesario
 }
 
 export interface PaginationOptions {
@@ -164,20 +167,60 @@ class UserService {
     }
   }
 
-  // Crear nuevo usuario
+  // Crear nuevo usuario (crear en Auth + tabla users)
   async createUser(userData: CreateUserData): Promise<User> {
     try {
-      const { data, error } = await supabase
+      // 1. Crear usuario en Supabase Auth
+      console.log('🔐 Creando usuario en Supabase Auth...')
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: userData.email,
+        password: userData.password,
+        options: {
+          data: {
+            username: userData.username
+          }
+        }
+      })
+
+      if (authError) {
+        console.error('❌ Error creando usuario en Auth:', authError)
+        throw authError
+      }
+
+      if (!authData.user) {
+        throw new Error('No se recibió información del usuario de Auth')
+      }
+
+      console.log('✅ Usuario creado en Auth:', authData.user.id)
+
+      // 2. Crear registro en tabla users
+      console.log('📝 Creando usuario en tabla users...')
+      const userTableData = {
+        id: authData.user.id,
+        username: userData.username,
+        tenant_id: userData.tenant_id,
+        role_id: userData.role_id
+      }
+
+      const { data: userRecord, error: userError } = await supabase
         .from(this.table)
-        .insert(userData)
+        .insert(userTableData)
         .select()
         .single()
 
-      if (error) {
-        throw error
+      if (userError) {
+        console.error('❌ Error creando usuario en tabla users:', userError)
+        
+        // Si falla la creación en la tabla, el usuario ya fue creado en Auth
+        // pero no podemos eliminar la cuenta de Auth sin permisos admin
+        console.warn('⚠️ Usuario creado en Auth pero falló la creación en tabla users')
+        console.warn('⚠️ Considerar implementar un cleanup manual o usar RLS políticas')
+        
+        throw userError
       }
 
-      return data
+      console.log('✅ Usuario creado exitosamente en tabla users')
+      return userRecord
     } catch (error) {
       console.error('Error creating user:', error)
       throw new Error('Error al crear usuario')
@@ -187,35 +230,67 @@ class UserService {
   // Actualizar usuario
   async updateUser(authUserId: string, userData: UpdateUserData): Promise<User> {
     try {
-      const { data, error } = await supabase
+      console.log('✏️ Actualizando usuario:', authUserId)
+      
+      // 1. Actualizar en la tabla users (solo campos relevantes)
+      const userTableData: any = {}
+      if (userData.username !== undefined) userTableData.username = userData.username
+      if (userData.tenant_id !== undefined) userTableData.tenant_id = userData.tenant_id
+      if (userData.role_id !== undefined) userTableData.role_id = userData.role_id
+
+      const { data: userRecord, error: userError } = await supabase
         .from(this.table)
-        .update(userData)
+        .update(userTableData)
         .eq('id', authUserId)
         .select()
         .single()
 
-      if (error) {
-        throw error
+      if (userError) {
+        console.error('❌ Error actualizando usuario en tabla users:', userError)
+        throw userError
       }
 
-      return data
+      console.log('✅ Usuario actualizado en tabla users')
+
+      // 2. Para actualizar en Auth (email, password), el usuario debe estar autenticado
+      // Por ahora solo actualizamos la tabla users
+      // Nota: La actualización de email/password en Auth requiere que el usuario esté autenticado
+      // o permisos admin
+      if (userData.email || userData.username) {
+        console.log('ℹ️ Para actualizar email o metadata en Auth, el usuario debe hacerlo desde su sesión')
+      }
+
+      return userRecord
     } catch (error) {
       console.error('Error updating user:', error)
       throw new Error('Error al actualizar usuario')
     }
   }
 
-  // Eliminar usuario
+  // Eliminar usuario (eliminar de tabla users + Auth)
   async deleteUser(authUserId: string): Promise<void> {
     try {
-      const { error } = await supabase
+      console.log('🗑️ Eliminando usuario:', authUserId)
+      
+      // 1. Eliminar de la tabla users primero
+      const { error: userError } = await supabase
         .from(this.table)
         .delete()
         .eq('id', authUserId)
 
-      if (error) {
-        throw error
+      if (userError) {
+        console.error('❌ Error eliminando usuario de tabla users:', userError)
+        throw userError
       }
+
+      console.log('✅ Usuario eliminado de tabla users')
+
+      // 2. Para eliminar del servicio de Auth, necesitaríamos permisos admin
+      // Por ahora solo eliminamos de la tabla users
+      // Nota: La eliminación completa del usuario de Auth requiere permisos admin
+      // o que el usuario elimine su propia cuenta
+      console.log('ℹ️ Usuario eliminado de tabla users. La cuenta de Auth permanece activa.')
+      
     } catch (error) {
       console.error('Error deleting user:', error)
       throw new Error('Error al eliminar usuario')
@@ -274,6 +349,44 @@ class UserService {
       throw new Error('Error al obtener usuarios del tenant')
     }
   }
+
+  // Obtener lista de tenants para dropdown
+  async getTenantsList(): Promise<Array<{ id: string, name: string }>> {
+    try {
+      const { data, error } = await supabase
+        .from('tenants')
+        .select('id, name')
+        .order('name', { ascending: true })
+
+      if (error) {
+        throw error
+      }
+
+      return data || []
+    } catch (error) {
+      console.error('Error fetching tenants list:', error)
+      throw new Error('Error al obtener lista de tenants')
+    }
+  }
+
+  // Obtener lista de roles para dropdown
+  async getRolesList(): Promise<Array<{ id: string, name: string }>> {
+    try {
+      const { data, error } = await supabase
+        .from('roles')
+        .select('id, name')
+        .order('name', { ascending: true })
+
+      if (error) {
+        throw error
+      }
+
+      return data || []
+    } catch (error) {
+      console.error('Error fetching roles list:', error)
+      throw new Error('Error al obtener lista de roles')
+    }
+  }
 }
 
 // Instancia singleton del servicio
@@ -282,7 +395,16 @@ export const userService = new UserService()
 // Para compatibilidad con el sistema de paginación genérico
 export const userServicePaginated = {
   getPaginated: (options: PaginationOptions) => userService.getUsersPaginated(options),
-  create: (data: CreateUserData) => userService.createUser(data),
-  update: (id: string, data: UpdateUserData) => userService.updateUser(id, data),
-  delete: (id: string) => userService.deleteUser(id)
+  create: async (data: CreateUserData) => {
+    const result = await userService.createUser(data)
+    return result
+  },
+  update: async (id: string, data: UpdateUserData) => {
+    const result = await userService.updateUser(id, data)
+    return result
+  },
+  delete: async (id: string) => {
+    await userService.deleteUser(id)
+    // No retornar nada para coincidir con Promise<void>
+  }
 }
