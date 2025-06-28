@@ -128,10 +128,22 @@ const goToSettings = () => {
 // Función de logout
 const handleLogout = async () => {
   try {
-    await logout()
+    console.log('🚪 Iniciando logout desde header...')
+    const result = await logout()
+    
+    if (result.warning) {
+      console.warn('⚠️ Logout completado con advertencias:', result.warning)
+    }
+    
+    // Siempre redirigir al login, incluso si hubo advertencias
     router.push('/login')
+    console.log('✅ Redirigido a login')
   } catch (error) {
-    console.error('Error al cerrar sesión:', error)
+    console.error('❌ Error crítico al cerrar sesión:', error)
+    
+    // Aún así intentar redirigir al login
+    router.push('/login')
+    console.log('🔄 Redirigido a login a pesar del error')
   }
 }
 </script>

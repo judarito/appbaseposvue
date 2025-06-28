@@ -5,13 +5,19 @@ import router from './router'
 import { useSupabase } from './composables/useSupabase'
 import './assets/styles/main.css'
 
-const app = createApp(App)
+async function initializeApp() {
+  const app = createApp(App)
 
-app.use(vuetify)
-app.use(router)
+  app.use(vuetify)
+  app.use(router)
 
-// Inicializar Supabase
-const { initAuth } = useSupabase()
-initAuth()
+  // Inicializar Supabase auth antes de montar la app
+  const { initAuth } = useSupabase()
+  await initAuth()
 
-app.mount('#app')
+  // Montar la aplicación
+  app.mount('#app')
+}
+
+// Inicializar la aplicación
+initializeApp().catch(console.error)

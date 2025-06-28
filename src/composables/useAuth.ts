@@ -1,4 +1,4 @@
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { userService, type UserWithRelations } from '../services/userService'
 import { useSupabase } from './useSupabase'
 
@@ -8,11 +8,8 @@ const userLoading = ref(false)
 const userError = ref<string | null>(null)
 
 export function useAuth() {
-  const { supabase, user: authUser } = useSupabase()
+  const { supabase, user: authUser, isAuthenticated } = useSupabase()
 
-  // Computed para verificar si el usuario está autenticado
-  const isAuthenticated = computed(() => !!authUser.value)
-  
   // Computed para obtener la información del usuario actual
   const user = computed(() => currentUser.value)
   
@@ -26,6 +23,19 @@ export function useAuth() {
   const hasRole = computed(() => (roleName: string) => {
     return currentRole.value?.name === roleName
   })
+
+  // Watcher para sincronizar con cambios en la autenticación de Supabase
+  watch(authUser, async (newAuthUser) => {
+    if (newAuthUser && !currentUser.value) {
+      // Usuario autenticado pero sin información cargada, intentar cargar
+      console.log('🔄 Usuario autenticado detectado, cargando información...')
+      await loadUserInfo(newAuthUser.id)
+    } else if (!newAuthUser) {
+      // Usuario no autenticado, limpiar información
+      console.log('🧹 Usuario no autenticado, limpiando información...')
+      clearUserInfo()
+    }
+  }, { immediate: true })
 
   // Función para cargar la información del usuario después del login
   const loadUserInfo = async (authUserId: string) => {
@@ -69,20 +79,49 @@ export function useAuth() {
   }
 
   // Función para restaurar información del usuario desde localStorage
-  const restoreUserInfo = () => {
+  const restoreUserInfo = async () => {
+    // Si ya hay información del usuario cargada, no hacer nada
+    if (currentUser.value) {
+      console.log('ℹ️ Información del usuario ya está cargada')
+      return true
+    }
+
+    // Si no hay usuario autenticado, no intentar restaurar
+    if (!authUser.value) {
+      console.log('ℹ️ No hay usuario autenticado, no se puede restaurar información')
+      return false
+    }
+
+    console.log('🔄 Intentando restaurar información del usuario...')
+    
     const savedUserInfo = localStorage.getItem('userInfo')
     if (savedUserInfo) {
       try {
         const userData = JSON.parse(savedUserInfo)
-        currentUser.value = userData
-        console.log('🔄 Información del usuario restaurada desde localStorage')
-        return true
+        
+        // Verificar que el usuario guardado coincida con el autenticado
+        if (userData.id === authUser.value.id) {
+          currentUser.value = userData
+          console.log('✅ Información del usuario restaurada desde localStorage:', {
+            username: userData.username,
+            tenant: userData.tenant?.name,
+            role: userData.role?.name
+          })
+          return true
+        } else {
+          console.warn('⚠️ Usuario en localStorage no coincide con el autenticado')
+          localStorage.removeItem('userInfo')
+        }
       } catch (error) {
-        console.error('Error restaurando información del usuario:', error)
+        console.error('❌ Error restaurando información del usuario:', error)
         localStorage.removeItem('userInfo')
       }
     }
-    return false
+
+    // Si no se pudo restaurar desde localStorage, cargar desde la base de datos
+    console.log('📡 Cargando información del usuario desde la base de datos...')
+    await loadUserInfo(authUser.value.id)
+    return !!currentUser.value
   }
 
   // Función para actualizar la información del usuario
@@ -94,10 +133,22 @@ export function useAuth() {
 
   // Función para limpiar la información del usuario (logout)
   const clearUserInfo = () => {
+    console.log('🧹 Limpiando información del usuario...')
+    
+    // Limpiar estado reactivo
     currentUser.value = null
     userError.value = null
-    localStorage.removeItem('userInfo')
-    console.log('🧹 Información del usuario limpiada')
+    userLoading.value = false
+    
+    // Limpiar localStorage
+    try {
+      localStorage.removeItem('userInfo')
+      console.log('✅ localStorage limpiado')
+    } catch (error) {
+      console.warn('⚠️ Error limpiando localStorage:', error)
+    }
+    
+    console.log('✅ Información del usuario limpiada completamente')
   }
 
   // Función para hacer login
@@ -135,19 +186,40 @@ export function useAuth() {
   // Función para hacer logout
   const logout = async () => {
     try {
+      console.log('👋 Iniciando logout...')
+      
+      // Intentar cerrar sesión en Supabase
       const { error } = await supabase.auth.signOut()
       
       if (error) {
-        throw error
+        console.warn('⚠️ Error en logout de Supabase:', error.message)
+        
+        // Si el error es sobre sesión inexistente, solo limpiar localmente
+        if (error.message.includes('session_id claim') || 
+            error.message.includes('does not exist') ||
+            error.message.includes('JWT')) {
+          console.log('🔄 Sesión ya inválida en servidor, limpiando datos locales...')
+        } else {
+          // Para otros errores, relanzar la excepción
+          throw error
+        }
       }
 
+      // Siempre limpiar información local
       clearUserInfo()
-      console.log('👋 Logout exitoso')
+      console.log('✅ Logout completado (datos locales limpiados)')
       
       return { success: true }
     } catch (error: any) {
       console.error('❌ Error en logout:', error)
-      throw error
+      
+      // En caso de error crítico, aún así limpiar datos locales
+      console.log('🧹 Limpiando datos locales a pesar del error...')
+      clearUserInfo()
+      
+      // No relanzar el error para evitar que la UI se bloquee
+      console.warn('⚠️ Logout completado con advertencias')
+      return { success: true, warning: error.message }
     }
   }
 
@@ -172,6 +244,32 @@ export function useAuth() {
     return hasRole.value('tenant_admin') || isSystemAdmin.value
   })
 
+  // Función para forzar logout completo (en caso de errores de sesión)
+  const forceLogout = () => {
+    console.log('💥 Forzando logout completo...')
+    
+    // Limpiar todo el estado local
+    clearUserInfo()
+    
+    // Intentar limpiar localStorage adicional relacionado con Supabase
+    try {
+      const supabaseKeys = Object.keys(localStorage).filter(key => 
+        key.startsWith('sb-') || 
+        key.includes('supabase') ||
+        key === 'userInfo'
+      )
+      
+      supabaseKeys.forEach(key => {
+        localStorage.removeItem(key)
+        console.log(`🗑️ Removido: ${key}`)
+      })
+    } catch (error) {
+      console.warn('⚠️ Error limpiando localStorage completo:', error)
+    }
+    
+    console.log('✅ Logout forzado completado')
+  }
+
   return {
     // Estado
     user,
@@ -192,6 +290,7 @@ export function useAuth() {
     restoreUserInfo,
     updateUserInfo,
     clearUserInfo,
+    forceLogout,
     login,
     logout,
     hasPermission
