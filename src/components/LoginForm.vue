@@ -27,7 +27,7 @@
 
               <v-text-field
                 v-model="password"
-                :label="isSignUp ? 'Contraseña (mín. 6 caracteres)' : 'Contraseña'"
+                label="Contraseña"
                 :type="showPassword ? 'text' : 'password'"
                 prepend-inner-icon="mdi-lock"
                 :append-inner-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
@@ -35,31 +35,6 @@
                 variant="outlined"
                 :rules="passwordRules"
                 :error-messages="passwordError"
-                class="mb-4"
-                required
-              />
-
-              <v-text-field
-                v-if="isSignUp"
-                v-model="confirmPassword"
-                label="Confirmar Contraseña"
-                :type="showConfirmPassword ? 'text' : 'password'"
-                prepend-inner-icon="mdi-lock-check"
-                :append-inner-icon="showConfirmPassword ? 'mdi-eye' : 'mdi-eye-off'"
-                @click:append-inner="showConfirmPassword = !showConfirmPassword"
-                variant="outlined"
-                :rules="confirmPasswordRules"
-                class="mb-4"
-                required
-              />
-
-              <v-text-field
-                v-if="isSignUp"
-                v-model="fullName"
-                label="Nombre Completo"
-                prepend-inner-icon="mdi-account"
-                variant="outlined"
-                :rules="nameRules"
                 class="mb-4"
                 required
               />
@@ -96,18 +71,7 @@
                 :loading="loading"
                 class="mb-4"
               >
-                {{ isSignUp ? 'Crear Cuenta' : 'Iniciar Sesión' }}
-              </v-btn>
-
-              <v-divider class="mb-4" />
-
-              <v-btn
-                variant="text"
-                block
-                @click="toggleMode"
-                :disabled="loading"
-              >
-                {{ isSignUp ? '¿Ya tienes cuenta? Inicia sesión' : '¿No tienes cuenta? Regístrate' }}
+                Iniciar Sesión
               </v-btn>
             </v-form>
           </v-card-text>
@@ -118,31 +82,25 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import { useAuth } from '../composables/useAuth'
-import { useSupabase } from '../composables/useSupabase'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
-const { signUp } = useSupabase() // Solo para registro
 const { login, userLoading } = useAuth() // Para login con carga de usuario
 
 // Estado del formulario
 const formRef = ref()
 const email = ref('')
 const password = ref('')
-const confirmPassword = ref('')
-const fullName = ref('')
 const showPassword = ref(false)
-const showConfirmPassword = ref(false)
-const isSignUp = ref(false)
 const errorMessage = ref('')
 const successMessage = ref('')
 const emailError = ref('')
 const passwordError = ref('')
 
-// Usar loading del auth para login, y loading local para registro
-const loading = computed(() => isSignUp.value ? false : userLoading.value)
+// Usar loading del auth
+const loading = userLoading
 
 // Reglas de validación
 const emailRules = [
@@ -150,27 +108,10 @@ const emailRules = [
   (v: string) => /.+@.+\..+/.test(v) || 'Email debe ser válido'
 ]
 
-const passwordRules = computed(() => [
+const passwordRules = [
   (v: string) => !!v || 'La contraseña es requerida',
   (v: string) => v.length >= 6 || 'La contraseña debe tener al menos 6 caracteres'
-])
-
-const confirmPasswordRules = computed(() => [
-  (v: string) => !!v || 'Confirmar contraseña es requerido',
-  (v: string) => v === password.value || 'Las contraseñas no coinciden'
-])
-
-const nameRules = [
-  (v: string) => !!v || 'El nombre es requerido',
-  (v: string) => v.length >= 2 || 'El nombre debe tener al menos 2 caracteres'
 ]
-
-// Alternar entre login y registro
-const toggleMode = () => {
-  isSignUp.value = !isSignUp.value
-  clearMessages()
-  clearForm()
-}
 
 // Limpiar mensajes
 const clearMessages = () => {
@@ -180,15 +121,7 @@ const clearMessages = () => {
   passwordError.value = ''
 }
 
-// Limpiar formulario
-const clearForm = () => {
-  email.value = ''
-  password.value = ''
-  confirmPassword.value = ''
-  fullName.value = ''
-}
-
-// Manejar login/registro
+// Manejar login
 const handleLogin = async () => {
   clearMessages()
 
@@ -197,38 +130,20 @@ const handleLogin = async () => {
   if (!valid) return
 
   try {
-    if (isSignUp.value) {
-      // Registro
-      await signUp(email.value, password.value, {
-        full_name: fullName.value
-      })
-      successMessage.value = 'Cuenta creada exitosamente. Revisa tu email para confirmar tu cuenta.'
-      
-      // Cambiar a modo login después de registro exitoso
-      setTimeout(() => {
-        isSignUp.value = false
-        clearForm()
-        successMessage.value = ''
-      }, 3000)
-      
-    } else {
-      // Login con carga de información del usuario
-      await login(email.value, password.value)
-      successMessage.value = 'Inicio de sesión exitoso'
-      
-      // Redirigir al dashboard
-      setTimeout(() => {
-        router.push('/')
-      }, 1000)
-    }
+    // Login con carga de información del usuario
+    await login(email.value, password.value)
+    successMessage.value = 'Inicio de sesión exitoso'
+    
+    // Redirigir al dashboard
+    setTimeout(() => {
+      router.push('/')
+    }, 1000)
   } catch (error: any) {
     console.error('Auth error:', error)
     
     // Manejar errores específicos
     if (error.message.includes('Invalid login credentials')) {
       errorMessage.value = 'Credenciales inválidas. Verifica tu email y contraseña.'
-    } else if (error.message.includes('User already registered')) {
-      errorMessage.value = 'Este email ya está registrado. Intenta iniciar sesión.'
     } else if (error.message.includes('Email not confirmed')) {
       errorMessage.value = 'Debes confirmar tu email antes de iniciar sesión.'
     } else if (error.message.includes('Too many requests')) {

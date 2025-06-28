@@ -48,6 +48,8 @@ export function useSupabase() {
   }
 
   // Registrarse con email y contraseña
+  // Nota: Este método está disponible pero la creación de usuarios se maneja
+  // desde el CRUD administrativo en userService.ts
   const signUp = async (email: string, password: string, metadata?: object) => {
     const { data, error } = await supabase.auth.signUp({
       email,
