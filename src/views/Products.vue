@@ -1,8 +1,8 @@
 <template>
-  <div class="pa-4">
-    <h1 class="text-h4 mb-4">Productos</h1>
+  <div class="pa-2 pa-sm-4">
+    <h1 class="text-h5 text-sm-h4 mb-4">Productos</h1>
     <v-card>
-      <v-card-text>
+      <v-card-text class="pa-4">
         <p>Gestión de Productos</p>
       </v-card-text>
     </v-card>

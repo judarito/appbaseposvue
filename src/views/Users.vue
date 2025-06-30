@@ -1,6 +1,6 @@
 <template>
-  <div class="pa-4">
-    <h1 class="text-h4 mb-4">Usuarios del Sistema</h1>
+  <div class="pa-2 pa-sm-4">
+    <h1 class="text-h5 text-sm-h4 mb-4">Usuarios del Sistema</h1>
     
     <DataTablePaginated
       title="Gestión de Usuarios"
@@ -87,14 +87,20 @@
       </template>
     </DataTablePaginated>
 
-    <!-- Dialog para crear/editar usuario -->
-    <v-dialog v-model="dialogVisible" max-width="800px" persistent>
+    <!-- Dialog para crear/editar usuario - Responsivo -->
+    <v-dialog 
+      v-model="dialogVisible" 
+      :max-width="$vuetify.display.xs ? '95vw' : '800px'"
+      :fullscreen="$vuetify.display.xs"
+      persistent 
+      scrollable
+    >
       <v-card>
-        <v-card-title class="d-flex align-center">
+        <v-card-title class="d-flex align-center pa-4">
           <v-icon class="mr-3">
             {{ dialogMode === 'create' ? 'mdi-account-plus' : 'mdi-account-edit' }}
           </v-icon>
-          {{ dialogMode === 'create' ? 'Crear Usuario' : 'Editar Usuario' }}
+          <span class="text-h5 text-sm-h4">{{ dialogMode === 'create' ? 'Crear Usuario' : 'Editar Usuario' }}</span>
         </v-card-title>
         
         <v-card-text>

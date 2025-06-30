@@ -1,5 +1,5 @@
 <template>
-  <div class="pa-4">
+  <div class="pa-2 pa-sm-4">
     <!-- Verificación de permisos -->
     <v-alert
       v-if="!isSuperAdmin && !userLoading"
@@ -17,7 +17,7 @@
 
     <!-- Contenido principal -->
     <template v-if="isSuperAdmin">
-      <h1 class="text-h4 mb-4">Gestión de Tenants</h1>
+      <h1 class="text-h5 text-sm-h4 mb-4">Gestión de Tenants</h1>
       <TenantsListNew />
     </template>
 

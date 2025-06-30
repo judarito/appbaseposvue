@@ -1,17 +1,17 @@
 <template>
   <v-container class="fill-height" fluid>
-    <v-row align="center" justify="center">
-      <v-col cols="12" sm="8" md="4">
+    <v-row align="center" justify="center" class="pa-2">
+      <v-col cols="12" sm="10" md="6" lg="4" xl="3">
         <v-card elevation="8" class="login-card">
-          <v-card-title class="text-center py-6">
+          <v-card-title class="text-center py-4 py-sm-6">
             <div class="d-flex flex-column align-center">
-              <v-icon size="64" color="primary" class="mb-4">mdi-account-circle</v-icon>
-              <h2 class="text-h4">Iniciar Sesión</h2>
-              <p class="text-subtitle-1 text-medium-emphasis">Accede a tu cuenta</p>
+              <v-icon :size="$vuetify.display.xs ? 48 : 64" color="primary" class="mb-3 mb-sm-4">mdi-account-circle</v-icon>
+              <h2 class="text-h5 text-sm-h4">Iniciar Sesión</h2>
+              <p class="text-subtitle-2 text-sm-subtitle-1 text-medium-emphasis">Accede a tu cuenta</p>
             </div>
           </v-card-title>
 
-          <v-card-text>
+          <v-card-text class="pa-4 pa-sm-6">
             <v-form @submit.prevent="handleLogin" ref="formRef">
               <v-text-field
                 v-model="email"
@@ -21,7 +21,8 @@
                 variant="outlined"
                 :rules="emailRules"
                 :error-messages="emailError"
-                class="mb-4"
+                class="mb-3 mb-sm-4"
+                density="comfortable"
                 required
               />
 
@@ -35,7 +36,8 @@
                 variant="outlined"
                 :rules="passwordRules"
                 :error-messages="passwordError"
-                class="mb-4"
+                class="mb-3 mb-sm-4"
+                density="comfortable"
                 required
               />
 

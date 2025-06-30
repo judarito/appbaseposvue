@@ -2,8 +2,10 @@
   <v-dialog
     :model-value="visible"
     @update:model-value="$emit('close')"
-    max-width="500"
+    :max-width="$vuetify.display.xs ? '95vw' : '500px'"
+    :fullscreen="$vuetify.display.xs"
     persistent
+    scrollable
   >
     <v-card>
       <v-card-title class="d-flex align-center">

@@ -1,16 +1,16 @@
 <template>
-  <div class="pa-4">
-    <h1 class="text-h4 mb-4">Configuración</h1>
+  <div class="pa-2 pa-sm-4">
+    <h1 class="text-h5 text-sm-h4 mb-4">Configuración</h1>
     
     <v-row>
       <!-- Card de configuración de tema -->
-      <v-col cols="12" md="6">
-        <v-card :theme="currentTheme" elevation="2">
-          <v-card-title class="d-flex align-center">
+      <v-col cols="12" lg="6">
+        <v-card :theme="currentTheme" elevation="2" class="h-100">
+          <v-card-title class="d-flex align-center pa-4">
             <v-icon class="mr-2">mdi-palette</v-icon>
-            Tema de la Aplicación
+            <span class="text-h6">Tema de la Aplicación</span>
           </v-card-title>
-          <v-card-text>
+          <v-card-text class="pa-4">
             <div class="mb-4">
               <v-switch
                 :model-value="isDarkMode"
@@ -49,14 +49,15 @@
             
             <v-divider class="my-4" />
             
-            <!-- Botones de acción rápida -->
-            <div class="d-flex gap-2">
+            <!-- Botones de tema responsivos -->
+            <div class="d-flex flex-column flex-sm-row gap-2 mb-3">
               <v-btn
                 variant="outlined"
                 size="small"
                 @click="setLightTheme"
                 :disabled="!isDarkMode"
                 prepend-icon="mdi-weather-sunny"
+                class="flex-grow-1 flex-sm-grow-0"
               >
                 Modo Claro
               </v-btn>
@@ -66,6 +67,7 @@
                 @click="setDarkTheme"
                 :disabled="isDarkMode"
                 prepend-icon="mdi-weather-night"
+                class="flex-grow-1 flex-sm-grow-0"
               >
                 Modo Oscuro
               </v-btn>
@@ -75,13 +77,13 @@
       </v-col>
       
       <!-- Card de configuración de paginación -->
-      <v-col cols="12" md="6">
-        <v-card :theme="currentTheme" elevation="2">
-          <v-card-title class="d-flex align-center">
+      <v-col cols="12" lg="6">
+        <v-card :theme="currentTheme" elevation="2" class="h-100">
+          <v-card-title class="d-flex align-center pa-4">
             <v-icon class="mr-2">mdi-table</v-icon>
-            Configuración de Paginación
+            <span class="text-h6">Configuración de Paginación</span>
           </v-card-title>
-          <v-card-text>
+          <v-card-text class="pa-4">
             <div class="mb-4">
               <p class="text-body-1 mb-3">
                 <strong>Tamaño de página por defecto:</strong>
@@ -135,16 +137,17 @@
               </v-row>
             </div>
             
-            <!-- Botones de acción rápida -->
-            <div class="d-flex gap-2 mb-3">
+            <!-- Botones de acción rápida responsivos -->
+            <div class="d-flex flex-column flex-sm-row gap-2 mb-3">
               <v-btn
                 variant="outlined"
                 size="small"
                 @click="setQuickPageSize(10)"
                 :color="currentDefaultPageSize === 10 ? 'primary' : 'default'"
                 prepend-icon="mdi-speedometer-slow"
+                class="flex-grow-1 flex-sm-grow-0"
               >
-                Rápido (10)
+                <span class="d-none d-sm-inline">Rápido </span>(10)
               </v-btn>
               <v-btn
                 variant="outlined"
@@ -152,8 +155,9 @@
                 @click="setQuickPageSize(25)"
                 :color="currentDefaultPageSize === 25 ? 'primary' : 'default'"
                 prepend-icon="mdi-speedometer-medium"
+                class="flex-grow-1 flex-sm-grow-0"
               >
-                Medio (25)
+                <span class="d-none d-sm-inline">Medio </span>(25)
               </v-btn>
               <v-btn
                 variant="outlined"
@@ -161,8 +165,9 @@
                 @click="setQuickPageSize(50)"
                 :color="currentDefaultPageSize === 50 ? 'primary' : 'default'"
                 prepend-icon="mdi-speedometer"
+                class="flex-grow-1 flex-sm-grow-0"
               >
-                Alto (50)
+                <span class="d-none d-sm-inline">Alto </span>(50)
               </v-btn>
             </div>
 
@@ -297,8 +302,8 @@ const systemPrefersDark = ref(false)
 const savedThemePreference = ref<string | null>(null)
 
 // Manejar toggle del tema
-const handleThemeToggle = (value: boolean) => {
-  if (value !== isDarkMode.value) {
+const handleThemeToggle = (value: boolean | null) => {
+  if (value !== null && value !== isDarkMode.value) {
     toggleTheme()
   }
 }
@@ -314,7 +319,7 @@ const setDarkTheme = () => {
 }
 
 // Manejar toggle de seguir tema del sistema
-const handleSystemThemeToggle = (value: boolean) => {
+const handleSystemThemeToggle = (value: boolean | null) => {
   if (value) {
     // Aplicar tema del sistema
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches

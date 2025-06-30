@@ -13,6 +13,7 @@
           :error-messages="errors.email"
           required
           :disabled="loading"
+          density="comfortable"
         />
       </v-col>
 
@@ -30,6 +31,7 @@
           :error-messages="errors.password"
           required
           :disabled="loading"
+          density="comfortable"
         />
       </v-col>
 
@@ -44,6 +46,7 @@
           :error-messages="errors.username"
           required
           :disabled="loading"
+          density="comfortable"
         />
       </v-col>
 
@@ -62,6 +65,7 @@
           :loading="tenantsLoading"
           required
           :disabled="loading"
+          density="comfortable"
         />
       </v-col>
 
@@ -80,6 +84,7 @@
           :loading="rolesLoading"
           required
           :disabled="loading"
+          density="comfortable"
         />
       </v-col>
 

@@ -15,6 +15,80 @@
   }
 }
 
+/* Mejoras de responsividad global */
+@media (max-width: 600px) {
+  /* Padding responsivo para vistas principales */
+  .pa-4 {
+    padding: 8px !important;
+  }
+  
+  /* Títulos responsivos */
+  .text-h4 {
+    font-size: 1.5rem !important;
+  }
+  
+  .text-h5 {
+    font-size: 1.25rem !important;
+  }
+  
+  /* Botones más pequeños en móvil */
+  .v-btn {
+    min-width: 40px !important;
+  }
+  
+  .v-btn--size-small {
+    height: 32px !important;
+    min-width: 32px !important;
+    padding: 0 8px !important;
+  }
+  
+  /* Cards más compactas en móvil */
+  .v-card {
+    margin-bottom: 8px !important;
+  }
+  
+  .v-card-text {
+    padding: 12px !important;
+  }
+  
+  .v-card-title {
+    padding: 12px !important;
+    font-size: 1.1rem !important;
+  }
+  
+  /* Tablas responsivas */
+  .v-data-table {
+    font-size: 0.875rem !important;
+  }
+  
+  .v-data-table-header {
+    font-size: 0.8rem !important;
+  }
+  
+  /* Formularios responsivos */
+  .v-text-field {
+    margin-bottom: 8px !important;
+  }
+  
+  .v-select {
+    margin-bottom: 8px !important;
+  }
+}
+
+@media (min-width: 601px) and (max-width: 960px) {
+  /* Ajustes para tablet */
+  .pa-4 {
+    padding: 16px !important;
+  }
+}
+
+@media (min-width: 961px) {
+  /* Ajustes para desktop */
+  .pa-4 {
+    padding: 24px !important;
+  }
+}
+
 /* Transiciones suaves para el cambio de tema */
 .v-application {
   transition: background-color 0.3s ease, color 0.3s ease;
@@ -74,4 +148,198 @@
 
 .v-theme--dark .v-list-item--active .v-icon {
   color: #64b5f6 !important;
+}
+
+/* Mejoras adicionales de responsividad */
+
+/* Navegación responsive */
+@media (max-width: 1264px) {
+  .v-navigation-drawer--temporary {
+    z-index: 1006 !important;
+  }
+}
+
+/* Diálogos responsivos */
+@media (max-width: 600px) {
+  .v-dialog {
+    margin: 8px !important;
+  }
+  
+  .v-dialog > .v-card {
+    margin: 0 !important;
+  }
+  
+  .v-dialog--fullscreen .v-card {
+    height: 100vh !important;
+    overflow-y: auto !important;
+  }
+}
+
+/* Mejoras para chips responsivos */
+.v-chip {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .v-chip {
+    font-size: 0.75rem !important;
+    height: 24px !important;
+    padding: 0 6px !important;
+  }
+  
+  .v-chip .v-icon {
+    font-size: 16px !important;
+  }
+}
+
+/* Paginación responsiva */
+@media (max-width: 600px) {
+  .v-pagination {
+    justify-content: center !important;
+  }
+  
+  .v-pagination__item,
+  .v-pagination__navigation {
+    min-width: 32px !important;
+    height: 32px !important;
+    font-size: 0.875rem !important;
+  }
+}
+
+/* Alertas responsivas */
+@media (max-width: 600px) {
+  .v-alert {
+    font-size: 0.875rem !important;
+  }
+  
+  .v-alert__content {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+/* Breadcrumbs responsivos */
+@media (max-width: 600px) {
+  .v-breadcrumbs {
+    padding: 8px !important;
+  }
+  
+  .v-breadcrumbs-item {
+    font-size: 0.875rem !important;
+  }
+  
+  .v-breadcrumbs-divider {
+    margin: 0 4px !important;
+  }
+}
+
+/* Tooltips responsivos */
+@media (max-width: 600px) {
+  .v-tooltip > .v-overlay__content {
+    font-size: 0.875rem !important;
+    max-width: 280px !important;
+  }
+}
+
+/* Menu responsivo */
+@media (max-width: 600px) {
+  .v-list-item {
+    min-height: 40px !important;
+    padding: 0 12px !important;
+  }
+  
+  .v-list-item__content {
+    font-size: 0.875rem !important;
+  }
+  
+  .v-list-item__prepend {
+    margin-right: 12px !important;
+  }
+}
+
+/* Mejoras para scroll horizontal en tablas */
+.table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 960px) {
+  .v-data-table-wrapper {
+    overflow-x: auto !important;
+  }
+}
+
+/* Espaciado inteligente para contenedores */
+.responsive-container {
+  padding: 8px;
+}
+
+@media (min-width: 600px) {
+  .responsive-container {
+    padding: 16px;
+  }
+}
+
+@media (min-width: 960px) {
+  .responsive-container {
+    padding: 24px;
+  }
+}
+
+@media (min-width: 1264px) {
+  .responsive-container {
+    padding: 32px;
+  }
+}
+
+/* Utilities responsivas adicionales */
+.text-responsive {
+  font-size: 0.875rem;
+}
+
+@media (min-width: 600px) {
+  .text-responsive {
+    font-size: 1rem;
+  }
+}
+
+@media (min-width: 960px) {
+  .text-responsive {
+    font-size: 1.125rem;
+  }
+}
+
+/* Flex utilities responsivas */
+@media (max-width: 600px) {
+  .flex-mobile-column {
+    flex-direction: column !important;
+  }
+  
+  .flex-mobile-wrap {
+    flex-wrap: wrap !important;
+  }
+}
+
+/* Grid responsivo mejorado */
+@media (max-width: 600px) {
+  .v-row {
+    margin: -4px !important;
+  }
+  
+  .v-col {
+    padding: 4px !important;
+  }
+}
+
+@media (min-width: 601px) and (max-width: 960px) {
+  .v-row {
+    margin: -8px !important;
+  }
+  
+  .v-col {
+    padding: 8px !important;
+  }
 }

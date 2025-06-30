@@ -34,20 +34,20 @@
 
     <v-row>
       <v-col cols="12">
-        <h1 class="text-h4 mb-4">Dashboard</h1>
+        <h1 class="text-h5 text-sm-h4 mb-4">Dashboard</h1>
         
-        <!-- Cards de estadísticas -->
+        <!-- Cards de estadísticas responsivas -->
         <v-row class="mb-4">
-          <v-col cols="12" md="3" v-for="stat in filteredStats" :key="stat.title">
+          <v-col cols="12" sm="6" md="4" lg="3" v-for="stat in filteredStats" :key="stat.title">
             <v-card 
               :color="cardColor" 
               :theme="currentTheme"
               elevation="3"
-              class="stat-card"
+              class="stat-card h-100"
               @click="navigateToSection(stat.route)"
               style="cursor: pointer;"
             >
-              <v-card-text>
+              <v-card-text class="pa-4">
                 <div class="d-flex align-center">
                   <v-icon 
                     :icon="stat.icon"

@@ -1,5 +1,5 @@
 <template>
-  <v-list nav :theme="currentTheme">
+  <v-list nav :theme="currentTheme" :density="listDensity">
     <v-list-item
       v-for="item in filteredMenuItems"
       :key="item.title"
@@ -8,6 +8,7 @@
       @click="selectMenuItem(item)"
       :class="{ 'menu-item-active': isActive(item.route) }"
       class="menu-item"
+      :min-height="itemHeight"
     />
   </v-list>
 </template>
@@ -15,9 +16,19 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { useDisplay } from 'vuetify'
 import { useAppTheme } from '../composables/useTheme'
 import { useAuth } from '../composables/useAuth'
 import type { MenuItem } from '../types'
+
+// Props
+interface Props {
+  compact?: boolean
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  compact: false
+})
 
 // Emits
 const emit = defineEmits<{
@@ -28,11 +39,28 @@ const emit = defineEmits<{
 const router = useRouter()
 const route = useRoute()
 
+// Display
+const { xs, sm } = useDisplay()
+
 // Usar el composable del tema
 const { currentTheme } = useAppTheme()
 
 // Usar el composable de autenticación para verificar roles
 const { isSuperAdmin, hasRole } = useAuth()
+
+// Computed para densidad de la lista (responsivo)
+const listDensity = computed(() => {
+  if (props.compact || xs.value) return 'compact'
+  if (sm.value) return 'comfortable'
+  return 'default'
+})
+
+// Computed para altura de items (responsivo)
+const itemHeight = computed(() => {
+  if (props.compact || xs.value) return 40
+  if (sm.value) return 48
+  return 56
+})
 
 // Items del menú con roles requeridos
 const menuItems: MenuItem[] = [
