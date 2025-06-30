@@ -1,8 +1,8 @@
 <template>
   <v-container class="fill-height" fluid>
-    <v-row align="center" justify="center" class="pa-2">
-      <v-col cols="12" sm="10" md="6" lg="4" xl="3">
-        <v-card elevation="8" class="login-card">
+    <v-row align="center" justify="center" class="fill-height ma-0">
+      <v-col cols="12" sm="10" md="6" lg="4" xl="3" class="pa-2">
+        <v-card elevation="8" class="login-card mx-auto">
           <v-card-title class="text-center py-4 py-sm-6">
             <div class="d-flex flex-column align-center">
               <v-icon :size="$vuetify.display.xs ? 48 : 64" color="primary" class="mb-3 mb-sm-4">mdi-account-circle</v-icon>
@@ -162,13 +162,43 @@ const handleLogin = async () => {
 <style scoped>
 .login-card {
   border-radius: 16px;
+  max-width: 100%;
 }
 
 .fill-height {
+  min-height: 100vh;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.v-container.fill-height {
+  padding: 0 !important;
+}
+
+.v-row.fill-height {
+  margin: 0 !important;
   min-height: 100vh;
 }
 
 .v-card-title {
   background: linear-gradient(135deg, rgba(25, 118, 210, 0.1) 0%, rgba(25, 118, 210, 0.05) 100%);
+}
+
+/* Ajustes responsivos para el centrado */
+@media (max-width: 600px) {
+  .login-card {
+    margin: 16px;
+    border-radius: 12px;
+  }
+  
+  .v-col {
+    padding: 8px !important;
+  }
+}
+
+@media (min-width: 601px) {
+  .login-card {
+    margin: 0 auto;
+  }
 }
 </style>

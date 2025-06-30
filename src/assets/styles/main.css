@@ -3,9 +3,14 @@
   font-family: 'Roboto', sans-serif;
 }
 
-/* Espaciado adicional */
-.v-main {
+/* Espaciado adicional solo para el layout principal (no auth) */
+.v-app:not(.auth-layout) .v-main {
   padding-top: 64px !important;
+}
+
+/* Layout de autenticación sin padding superior */
+.auth-layout .v-main {
+  padding-top: 0 !important;
 }
 
 /* Responsive adjustments */
