@@ -1,4 +1,4 @@
-import { useSupabase } from '../composables/useSupabase'
+import { supabase } from '../lib/supabase'
 import type { PaginationOptions, PaginatedResponse, PaginatedService } from '../composables/usePagination'
 
 export interface Tenant {
@@ -16,11 +16,10 @@ export interface UpdateTenantData {
 }
 
 export class TenantService implements PaginatedService<Tenant> {
-  private supabase
+  private client = supabase
 
   constructor() {
-    const { supabase: client } = useSupabase()
-    this.supabase = client
+    // No necesario ya que importamos directamente el cliente
   }
 
   // Obtener tenants con paginación (método requerido por la interfaz)
@@ -32,7 +31,7 @@ export class TenantService implements PaginatedService<Tenant> {
     const to = from + itemsPerPage - 1
 
     // Construir query base
-    let query = this.supabase
+    let query = this.client
       .from('tenants')
       .select('*', { count: 'exact' })
 
@@ -49,7 +48,9 @@ export class TenantService implements PaginatedService<Tenant> {
 
     const { data, error, count } = await query
 
-    if (error) throw error
+    if (error) {
+      throw error
+    }
 
     const total = count || 0
     const totalPages = Math.ceil(total / itemsPerPage)
@@ -65,7 +66,7 @@ export class TenantService implements PaginatedService<Tenant> {
 
   // Obtener todos los tenants (mantener para compatibilidad)
   async getAllTenants(): Promise<Tenant[]> {
-    const { data, error } = await this.supabase
+    const { data, error } = await this.client
       .from('tenants')
       .select('*')
       .order('created_at', { ascending: false })
@@ -76,7 +77,7 @@ export class TenantService implements PaginatedService<Tenant> {
 
   // Obtener tenant por ID
   async getTenantById(id: string): Promise<Tenant | null> {
-    const { data, error } = await this.supabase
+    const { data, error } = await this.client
       .from('tenants')
       .select('*')
       .eq('id', id)
@@ -93,7 +94,7 @@ export class TenantService implements PaginatedService<Tenant> {
 
   // Crear nuevo tenant (método requerido por la interfaz)
   async create(tenantData: CreateTenantData): Promise<Tenant> {
-    const { data, error } = await this.supabase
+    const { data, error } = await this.client
       .from('tenants')
       .insert({
         name: tenantData.name,
@@ -108,7 +109,7 @@ export class TenantService implements PaginatedService<Tenant> {
 
   // Actualizar tenant (método requerido por la interfaz)
   async update(id: string, tenantData: UpdateTenantData): Promise<Tenant> {
-    const { data, error } = await this.supabase
+    const { data, error } = await this.client
       .from('tenants')
       .update(tenantData)
       .eq('id', id)
@@ -121,7 +122,7 @@ export class TenantService implements PaginatedService<Tenant> {
 
   // Eliminar tenant (método requerido por la interfaz)
   async delete(id: string): Promise<void> {
-    const { error } = await this.supabase
+    const { error } = await this.client
       .from('tenants')
       .delete()
       .eq('id', id)
@@ -131,7 +132,7 @@ export class TenantService implements PaginatedService<Tenant> {
 
   // Buscar tenants por nombre
   async searchTenantsByName(name: string): Promise<Tenant[]> {
-    const { data, error } = await this.supabase
+    const { data, error } = await this.client
       .from('tenants')
       .select('*')
       .ilike('name', `%${name}%`)
@@ -143,7 +144,7 @@ export class TenantService implements PaginatedService<Tenant> {
 
   // Verificar si existe un tenant con el mismo nombre
   async checkTenantNameExists(name: string, excludeId?: string): Promise<boolean> {
-    let query = this.supabase
+    let query = this.client
       .from('tenants')
       .select('id')
       .eq('name', name)
@@ -178,3 +179,20 @@ export class TenantService implements PaginatedService<Tenant> {
 
 // Exportar instancia singleton
 export const tenantService = new TenantService()
+
+// Para compatibilidad con el sistema de paginación genérico
+export const tenantServicePaginated = {
+  getPaginated: (options: PaginationOptions) => tenantService.getPaginated(options),
+  create: async (data: CreateTenantData) => {
+    const result = await tenantService.create(data)
+    return result
+  },
+  update: async (id: string, data: UpdateTenantData) => {
+    const result = await tenantService.update(id, data)
+    return result
+  },
+  delete: async (id: string) => {
+    await tenantService.delete(id)
+    // No retornar nada para coincidir con Promise<void>
+  }
+}

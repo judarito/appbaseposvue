@@ -11,7 +11,7 @@
           v-if="showRefreshButton"
           icon="mdi-refresh"
           variant="text"
-          @click="$emit('refresh')"
+          @click="refresh"
           :loading="loading"
           size="small"
         />
@@ -38,7 +38,7 @@
           <div class="d-flex flex-wrap gap-2">
             <v-chip color="primary" variant="tonal" size="small">
               <v-icon start>mdi-counter</v-icon>
-              <span class="d-none d-sm-inline">Mostrando: </span>{{ items.length }} de {{ totalCount }}
+              <span class="d-none d-sm-inline">Mostrando: </span>{{ items.length }} de {{ totalItems }}
             </v-chip>
             <v-chip color="info" variant="tonal" size="small">
               <v-icon start>mdi-file-multiple</v-icon>
@@ -61,7 +61,7 @@
         type="error"
         variant="tonal"
         closable
-        @click:close="$emit('clear-error')"
+        @click:close="clearError"
         class="mb-4"
       >
         {{ error }}
@@ -114,7 +114,7 @@
               label="Elementos por página"
               density="compact"
               variant="outlined"
-              @update:model-value="$emit('change-items-per-page', $event)"
+              @update:model-value="changeItemsPerPage"
               :style="{ width: $vuetify.display.xs ? '100%' : '200px' }"
               hide-details
               :menu-props="{ offset: 8, zIndex: 2000 }"
@@ -127,7 +127,7 @@
               :model-value="currentPage"
               :length="totalPages"
               :total-visible="$vuetify.display.xs ? 3 : totalVisible"
-              @update:model-value="$emit('change-page', $event)"
+              @update:model-value="loadPage"
               :disabled="loading"
               :show-first-last-page="!$vuetify.display.xs"
               density="comfortable"
@@ -147,7 +147,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, useSlots } from 'vue'
+import { computed, useSlots, onMounted } from 'vue'
+import { usePagination } from '../composables/usePagination'
+import type { PaginatedService } from '../composables/usePagination'
 
 // Interfaces
 interface Header {
@@ -159,28 +161,21 @@ interface Header {
 }
 
 interface Props {
+  // Configuración del servicio
+  service: PaginatedService<any>
+  initialItemsPerPage?: number
+  
   // Datos principales
   title: string
   icon?: string
   headers: Header[]
-  items: any[]
   itemKey?: string
-  
-  // Estado de carga y errores
-  loading?: boolean
-  error?: string | null
-  hasError?: boolean
   
   // Configuración de búsqueda
   showSearch?: boolean
-  searchTerm?: string
   searchLabel?: string
   
   // Configuración de paginación
-  currentPage: number
-  totalPages: number
-  itemsPerPage: number
-  totalCount: number
   itemsPerPageOptions?: number[]
   totalVisible?: number
   
@@ -193,11 +188,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   itemKey: 'id',
-  loading: false,
-  error: null,
-  hasError: false,
   showSearch: true,
-  searchTerm: '',
   searchLabel: 'Buscar...',
   itemsPerPageOptions: () => [5, 10, 25, 50],
   totalVisible: 5,
@@ -207,14 +198,35 @@ const props = withDefaults(defineProps<Props>(), {
   noDataSubtitle: 'No se encontraron registros'
 })
 
-// Emits
+// Emits para operaciones CRUD
 const emit = defineEmits<{
-  'refresh': []
-  'clear-error': []
-  'search': [term: string]
-  'change-page': [page: number]
-  'change-items-per-page': [itemsPerPage: number]
+  'item-created': [item: any]
+  'item-updated': [item: any]
+  'item-deleted': [id: string]
 }>()
+
+// Usar el composable de paginación con el servicio proporcionado
+const {
+  items,
+  loading,
+  saving,
+  error,
+  hasError,
+  totalItems,
+  totalPages,
+  currentPage,
+  itemsPerPage,
+  searchTerm,
+  loadPage,
+  changeItemsPerPage,
+  search,
+  create,
+  update,
+  remove,
+  refresh,
+  initialize,
+  clearError
+} = usePagination(props.service, props.initialItemsPerPage)
 
 // Slots dinámicos - detectar automáticamente los slots personalizados
 const slots = useSlots()
@@ -243,7 +255,7 @@ function debounce(func: Function, wait: number) {
 
 // Búsqueda con debounce
 const debouncedSearch = debounce((term: string) => {
-  emit('search', term || '')
+  search(term || '')
 }, 300)
 
 // Manejar búsqueda
@@ -253,10 +265,59 @@ const handleSearch = (value: string) => {
 
 // Texto de paginación
 const getPaginationText = () => {
-  const start = (props.currentPage - 1) * props.itemsPerPage + 1
-  const end = Math.min(props.currentPage * props.itemsPerPage, props.totalCount)
-  return `${start}-${end} de ${props.totalCount}`
+  const start = (currentPage.value - 1) * itemsPerPage.value + 1
+  const end = Math.min(currentPage.value * itemsPerPage.value, totalItems.value)
+  return `${start}-${end} de ${totalItems.value}`
 }
+
+// Métodos CRUD expuestos
+const createItem = async (data: any) => {
+  const newItem = await create(data)
+  if (newItem) {
+    emit('item-created', newItem)
+  }
+  return newItem
+}
+
+const updateItem = async (id: string, data: any) => {
+  const updatedItem = await update(id, data)
+  if (updatedItem) {
+    emit('item-updated', updatedItem)
+  }
+  return updatedItem
+}
+
+const deleteItem = async (id: string) => {
+  const success = await remove(id)
+  if (success) {
+    emit('item-deleted', id)
+  }
+  return success
+}
+
+// Inicializar al montar
+onMounted(async () => {
+  await initialize()
+})
+
+// Exponer métodos para uso externo
+defineExpose({
+  refresh,
+  createItem,
+  updateItem,
+  deleteItem,
+  clearError,
+  // Datos reactivos
+  items,
+  loading,
+  saving,
+  error,
+  hasError,
+  totalItems,
+  totalPages,
+  currentPage,
+  itemsPerPage
+})
 </script>
 
 <style scoped>

@@ -71,7 +71,7 @@
 
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
-import { useTenants } from '../composables/useTenants'
+import { tenantService } from '../services/tenantService'
 import type { Tenant } from '../services/tenantService'
 
 interface Props {
@@ -87,7 +87,9 @@ const emit = defineEmits<{
   saved: []
 }>()
 
-const { createTenant, updateTenant, saving, error } = useTenants()
+// Estado local
+const saving = ref(false)
+const error = ref<string | null>(null)
 
 // Formulario
 const formRef = ref()
@@ -157,13 +159,16 @@ const handleSubmit = async () => {
   const { valid } = await formRef.value.validate()
   if (!valid) return
 
+  saving.value = true
+  error.value = null
+
   try {
     let result = null
 
     if (props.mode === 'create') {
-      result = await createTenant({ name: form.value.name.trim() })
+      result = await tenantService.create({ name: form.value.name.trim() })
     } else if (props.tenant) {
-      result = await updateTenant(props.tenant.id!, { name: form.value.name.trim() })
+      result = await tenantService.update(props.tenant.id!, { name: form.value.name.trim() })
     }
 
     if (result) {
@@ -173,7 +178,10 @@ const handleSubmit = async () => {
     }
   } catch (err: any) {
     console.error('Error saving tenant:', err)
+    error.value = err.message || 'Error al guardar el tenant'
     errorMessage.value = err.message || 'Error al guardar el tenant'
+  } finally {
+    saving.value = false
   }
 }
 </script>

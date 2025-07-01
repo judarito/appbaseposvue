@@ -1,18 +1,20 @@
 <template>
-  <v-card>
-    <v-card-title class="d-flex align-center justify-space-between">
-      <div class="d-flex align-center">
-        <v-icon class="mr-2">mdi-domain</v-icon>
-        Gestión de Tenants
-      </div>
-      <div class="d-flex align-center gap-2">
-        <v-btn
-          icon="mdi-refresh"
-          variant="text"
-          @click="refreshData"
-          :loading="loading"
-          size="small"
-        />
+  <div class="pa-2 pa-sm-4">
+    <h1 class="text-h5 text-sm-h4 mb-4">Gestión de Tenants</h1>
+    
+    <DataTableSelfContained
+      title="Administrar Tenants"
+      icon="mdi-domain"
+      :headers="headers"
+      :service="tenantServicePaginated"
+      search-label="Buscar tenants..."
+      no-data-icon="mdi-domain-off"
+      no-data-title="No hay tenants"
+      no-data-subtitle="No se encontraron tenants en el sistema"
+      ref="dataTableRef"
+    >
+      <!-- Slot para acciones del header -->
+      <template #actions>
         <v-btn
           color="primary"
           prepend-icon="mdi-plus"
@@ -20,83 +22,32 @@
         >
           Nuevo Tenant
         </v-btn>
-      </div>
-    </v-card-title>
+      </template>
 
-    <v-card-text>
-      <!-- Barra de búsqueda -->
-      <v-text-field
-        v-model="localSearchTerm"
-        label="Buscar tenants..."
-        prepend-inner-icon="mdi-magnify"
-        variant="outlined"
-        clearable
-        @input="debouncedSearch"
-        class="mb-4"
-      />
+      <!-- Slot personalizado para el nombre -->
+      <template #item.name="{ item }">
+        <div class="d-flex align-center">
+          <v-avatar size="32" color="primary" class="mr-3">
+            <v-icon color="white">mdi-domain</v-icon>
+          </v-avatar>
+          <span class="font-weight-medium">{{ item.name }}</span>
+        </div>
+      </template>
 
-      <!-- Estadísticas y Debug Info -->
-      <v-row class="mb-4">
-        <v-col>
-          <v-chip color="primary" variant="tonal">
-            <v-icon start>mdi-counter</v-icon>
-            Mostrando: {{ tenants.length }} de {{ totalCount }}
-          </v-chip>
-          <v-chip color="info" variant="tonal" class="ml-2">
-            <v-icon start>mdi-file-multiple</v-icon>
-            Página: {{ currentPage }} de {{ totalPages }}
-          </v-chip>
-          <v-chip color="success" variant="tonal" class="ml-2">
-            <v-icon start>mdi-format-list-numbered</v-icon>
-            Por página: {{ itemsPerPage }}
-          </v-chip>
-        </v-col>
-      </v-row>
+      <!-- Slot personalizado para fecha de creación -->
+      <template #item.created_at="{ item }">
+        <span class="text-body-2">{{ formatDate(item.created_at) }}</span>
+      </template>
 
-      <!-- Loading -->
-      <v-progress-linear v-if="loading" indeterminate class="mb-4" />
-
-      <!-- Error -->
-      <v-alert
-        v-if="hasError"
-        type="error"
-        variant="tonal"
-        closable
-        @click:close="clearError"
-        class="mb-4"
-      >
-        {{ error }}
-      </v-alert>
-
-      <!-- Lista de tenants con paginación server-side -->
-      <v-data-table
-        :headers="headers"
-        :items="tenants"
-        :loading="loading"
-        item-key="id"
-        class="elevation-1"
-        hide-default-footer
-      >
-        <template v-slot:item.name="{ item }">
-          <div class="d-flex align-center">
-            <v-avatar size="32" color="primary" class="mr-3">
-              <v-icon color="white">mdi-domain</v-icon>
-            </v-avatar>
-            <span class="font-weight-medium">{{ item.name }}</span>
-          </div>
-        </template>
-
-        <template v-slot:item.created_at="{ item }">
-          {{ formatDate(item.created_at) }}
-        </template>
-
-        <template v-slot:item.actions="{ item }">
+      <!-- Slot personalizado para las acciones -->
+      <template #item.actions="{ item }">
+        <div class="d-flex gap-1">
           <v-btn
             icon="mdi-pencil"
             size="small"
             variant="text"
+            color="primary"
             @click="openEditDialog(item)"
-            class="mr-2"
           />
           <v-btn
             icon="mdi-delete"
@@ -105,52 +56,9 @@
             color="error"
             @click="openDeleteDialog(item)"
           />
-        </template>
-
-        <template v-slot:no-data>
-          <div class="text-center pa-4">
-            <v-icon size="64" color="grey">mdi-domain-off</v-icon>
-            <p class="text-h6 mt-2">
-              {{ localSearchTerm ? 'No se encontraron tenants' : 'No hay tenants' }}
-            </p>
-            <p class="text-body-2">
-              {{ localSearchTerm ? 'Intenta con otro término de búsqueda' : 'Crea tu primer tenant para comenzar' }}
-            </p>
-          </div>
-        </template>
-      </v-data-table>
-
-      <!-- Footer de paginación personalizado -->
-      <v-card-actions class="justify-center">
-        <v-row align="center" justify="center">
-          <v-col cols="auto">
-            <v-select
-              :model-value="itemsPerPage"
-              :items="[5, 10, 25, 50]"
-              label="Elementos por página"
-              density="compact"
-              variant="outlined"
-              @update:model-value="(value) => changeItemsPerPage(value)"
-              style="width: 200px"
-            />
-          </v-col>
-          <v-col cols="auto">
-            <v-pagination
-              :model-value="currentPage"
-              :length="totalPages"
-              :total-visible="5"
-              @update:model-value="(page) => loadPage(page)"
-              :disabled="loading"
-            />
-          </v-col>
-          <v-col cols="auto">
-            <span class="text-body-2">
-              {{ `${((currentPage - 1) * itemsPerPage) + 1}-${Math.min(currentPage * itemsPerPage, totalCount)} de ${totalCount}` }}
-            </span>
-          </v-col>
-        </v-row>
-      </v-card-actions>
-    </v-card-text>
+        </div>
+      </template>
+    </DataTableSelfContained>
 
     <!-- Dialog para crear/editar tenant -->
     <TenantDialog
@@ -161,85 +69,44 @@
       @saved="handleTenantSaved"
     />
 
-    <!-- Dialog de confirmación de eliminación -->
-    <v-dialog v-model="deleteDialog" max-width="400">
+    <!-- Dialog de confirmación para eliminar -->
+    <v-dialog v-model="deleteDialog" max-width="400px">
       <v-card>
-        <v-card-title class="text-h6">Confirmar Eliminación</v-card-title>
+        <v-card-title>Confirmar Eliminación</v-card-title>
         <v-card-text>
-          ¿Estás seguro de que quieres eliminar el tenant "{{ tenantToDelete?.name }}"?
+          ¿Estás seguro de que deseas eliminar el tenant 
+          <strong>{{ tenantToDelete?.name }}</strong>?
           Esta acción no se puede deshacer.
         </v-card-text>
         <v-card-actions>
           <v-spacer />
-          <v-btn
-            text
-            @click="deleteDialog = false"
-            :disabled="saving"
-          >
-            Cancelar
-          </v-btn>
-          <v-btn
-            color="error"
+          <v-btn text @click="deleteDialog = false">Cancelar</v-btn>
+          <v-btn 
+            color="error" 
             @click="confirmDelete"
-            :loading="saving"
           >
             Eliminar
           </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
-  </v-card>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useTenants } from '../composables/useTenants'
+import { ref } from 'vue'
+import { tenantService, tenantServicePaginated } from '../services/tenantService'
+import type { Tenant, CreateTenantData, UpdateTenantData } from '../services/tenantService'
+import DataTableSelfContained from './DataTableSelfContained.vue'
 import TenantDialog from './TenantDialog.vue'
-import type { Tenant } from '../services/tenantService'
 
-// Debounce function
-function debounce(func: Function, wait: number) {
-  let timeout: NodeJS.Timeout
-  return function executedFunction(...args: any[]) {
-    const later = () => {
-      clearTimeout(timeout)
-      func(...args)
-    }
-    clearTimeout(timeout)
-    timeout = setTimeout(later, wait)
-  }
-}
-
-const {
-  tenants,
-  loading,
-  saving,
-  error,
-  hasError,
-  totalCount,
-  totalPages,
-  currentPage,
-  itemsPerPage,
-  sortBy,
-  sortOrder,
-  searchTerm,
-  loadTenants,
-  loadPage,
-  changeItemsPerPage,
-  changeSorting,
-  searchTenants,
-  deleteTenant,
-  clearError,
-  refreshTenants
-} = useTenants()
-
-// Estado local
-const localSearchTerm = ref('')
+// Estado local para dialogs
 const dialogVisible = ref(false)
 const dialogMode = ref<'create' | 'edit'>('create')
 const selectedTenant = ref<Tenant | null>(null)
 const deleteDialog = ref(false)
 const tenantToDelete = ref<Tenant | null>(null)
+const dataTableRef = ref()
 
 // Headers de la tabla
 const headers = [
@@ -247,16 +114,6 @@ const headers = [
   { title: 'Fecha de Creación', key: 'created_at', align: 'start' as const, sortable: true },
   { title: 'Acciones', key: 'actions', align: 'center' as const, sortable: false }
 ]
-
-// Búsqueda con debounce
-const debouncedSearch = debounce((value: string) => {
-  searchTenants(value || '')
-}, 300)
-
-// Refrescar datos manualmente
-const refreshData = async () => {
-  await refreshTenants()
-}
 
 // Formatear fecha
 const formatDate = (dateString: string) => {
@@ -289,11 +146,10 @@ const closeDialog = () => {
   selectedTenant.value = null
 }
 
-// Manejar tenant guardado - AQUÍ ESTÁ LA CLAVE
+// Manejar tenant guardado (callback del TenantDialog)
 const handleTenantSaved = async () => {
   closeDialog()
-  // Forzar refresh de la lista después de guardar
-  await refreshTenants()
+  await dataTableRef.value?.refresh()
 }
 
 // Abrir dialog de eliminación
@@ -305,22 +161,15 @@ const openDeleteDialog = (tenant: Tenant) => {
 // Confirmar eliminación
 const confirmDelete = async () => {
   if (tenantToDelete.value) {
-    const success = await deleteTenant(tenantToDelete.value.id!)
+    const success = await dataTableRef.value?.deleteItem(tenantToDelete.value.id!)
     if (success) {
       deleteDialog.value = false
       tenantToDelete.value = null
     }
   }
 }
-
-// Cargar tenants al montar el componente
-onMounted(() => {
-  loadTenants({ page: 1, itemsPerPage: 10 })
-})
 </script>
 
 <style scoped>
-.gap-2 {
-  gap: 8px;
-}
+/* Estilos específicos del componente si es necesario */
 </style>

@@ -2,28 +2,16 @@
   <div class="pa-2 pa-sm-4">
     <h1 class="text-h5 text-sm-h4 mb-4">Usuarios del Sistema</h1>
     
-    <DataTablePaginated
+    <DataTableSelfContained
       title="Gestión de Usuarios"
       icon="mdi-account-group"
       :headers="headers"
-      :items="items"
-      :loading="loading"
-      :error="error"
-      :has-error="hasError"
-      :current-page="currentPage"
-      :total-pages="totalPages"
-      :items-per-page="itemsPerPage"
-      :total-count="totalItems"
-      :search-term="searchTerm"
+      :service="userServicePaginated"
       search-label="Buscar usuarios..."
       no-data-icon="mdi-account-off"
       no-data-title="No hay usuarios"
       no-data-subtitle="No se encontraron usuarios en el sistema"
-      @refresh="refresh"
-      @clear-error="clearError"
-      @search="search"
-      @change-page="loadPage"
-      @change-items-per-page="changeItemsPerPage"
+      ref="dataTableRef"
     >
       <!-- Slot para acciones del header -->
       <template #actions>
@@ -85,7 +73,7 @@
           @click="openDeleteDialog(item)"
         />
       </template>
-    </DataTablePaginated>
+    </DataTableSelfContained>
 
     <!-- Dialog para crear/editar usuario - Responsivo -->
     <v-dialog 
@@ -164,41 +152,21 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { usePagination } from '../composables/usePagination'
+import { ref } from 'vue'
 import { userService, userServicePaginated } from '../services/userService'
 import type { UserWithRelations, CreateUserData, UpdateUserData } from '../services/userService'
-import DataTablePaginated from '../components/DataTablePaginated.vue'
+import DataTableSelfContained from '../components/DataTableSelfContained.vue'
 import UserForm from '../components/UserForm.vue'
 
-// Usar el composable genérico de paginación
-const {
-  items,
-  loading,
-  saving,
-  error,
-  hasError,
-  totalItems,
-  totalPages,
-  currentPage,
-  itemsPerPage,
-  searchTerm,
-  loadPage,
-  changeItemsPerPage,
-  search,
-  remove,
-  refresh,
-  initialize,
-  clearError
-} = usePagination<UserWithRelations>(userServicePaginated)
-
 // Estado local para dialogs
+const saving = ref(false)
 const dialogVisible = ref(false)
 const dialogMode = ref<'create' | 'edit'>('create')
 const selectedUser = ref<UserWithRelations | null>(null)
 const deleteDialog = ref(false)
 const userToDelete = ref<UserWithRelations | null>(null)
 const userFormRef = ref()
+const dataTableRef = ref()
 
 // Headers de la tabla
 const headers = [
@@ -261,7 +229,7 @@ const handleUserSubmit = async (userData: CreateUserData | UpdateUserData) => {
     
     // Cerrar dialog y refrescar datos
     closeDialog()
-    await refresh()
+    await dataTableRef.value?.refresh()
   } catch (error: any) {
     console.error('❌ Error guardando usuario:', error)
     // El error se manejará en el UserForm
@@ -279,7 +247,7 @@ const submitForm = async () => {
 // Manejar usuario guardado (legacy, puede ser eliminado)
 const handleUserSaved = async () => {
   closeDialog()
-  await refresh()
+  await dataTableRef.value?.refresh()
 }
 
 // Abrir dialog de eliminación
@@ -291,18 +259,13 @@ const openDeleteDialog = (user: UserWithRelations) => {
 // Confirmar eliminación
 const confirmDelete = async () => {
   if (userToDelete.value) {
-    const success = await remove(userToDelete.value.id)
+    const success = await dataTableRef.value?.deleteItem(userToDelete.value.id)
     if (success) {
       deleteDialog.value = false
       userToDelete.value = null
     }
   }
 }
-
-// Inicializar datos al montar el componente
-onMounted(() => {
-  initialize()
-})
 </script>
 
 <style scoped>

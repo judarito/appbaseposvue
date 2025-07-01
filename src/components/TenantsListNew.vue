@@ -1,26 +1,14 @@
 <template>
-  <DataTablePaginated
+  <DataTableSelfContained
+    :service="tenantServicePaginated"
     title="Gestión de Tenants"
     icon="mdi-domain"
     :headers="headers"
-    :items="items"
-    :loading="loading"
-    :error="error"
-    :has-error="hasError"
-    :current-page="currentPage"
-    :total-pages="totalPages"
-    :items-per-page="itemsPerPage"
-    :total-count="totalItems"
-    :search-term="searchTerm"
     search-label="Buscar tenants..."
     no-data-icon="mdi-domain-off"
     no-data-title="No hay tenants"
     no-data-subtitle="Crea tu primer tenant para comenzar"
-    @refresh="refresh"
-    @clear-error="clearError"
-    @search="search"
-    @change-page="loadPage"
-    @change-items-per-page="changeItemsPerPage"
+    ref="dataTableRef"
   >
     <!-- Slot para acciones del header -->
     <template #actions>
@@ -65,7 +53,7 @@
         @click="openDeleteDialog(item)"
       />
     </template>
-  </DataTablePaginated>
+  </DataTableSelfContained>
 
   <!-- Dialog para crear/editar tenant -->
   <TenantDialog
@@ -89,14 +77,12 @@
         <v-btn
           text
           @click="deleteDialog = false"
-          :disabled="saving"
         >
           Cancelar
         </v-btn>
         <v-btn
           color="error"
           @click="confirmDelete"
-          :loading="saving"
         >
           Eliminar
         </v-btn>
@@ -106,33 +92,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { usePagination } from '../composables/usePagination'
-import { tenantService } from '../services/tenantService'
+import { ref } from 'vue'
+import { tenantService, tenantServicePaginated } from '../services/tenantService'
 import type { Tenant } from '../services/tenantService'
-import DataTablePaginated from './DataTablePaginated.vue'
+import DataTableSelfContained from './DataTableSelfContained.vue'
 import TenantDialog from './TenantDialog.vue'
-
-// Usar el composable genérico de paginación
-const {
-  items,
-  loading,
-  saving,
-  error,
-  hasError,
-  totalItems,
-  totalPages,
-  currentPage,
-  itemsPerPage,
-  searchTerm,
-  loadPage,
-  changeItemsPerPage,
-  search,
-  remove,
-  refresh,
-  initialize,
-  clearError
-} = usePagination<Tenant>(tenantService)
 
 // Estado local para dialogs
 const dialogVisible = ref(false)
@@ -140,6 +104,7 @@ const dialogMode = ref<'create' | 'edit'>('create')
 const selectedTenant = ref<Tenant | null>(null)
 const deleteDialog = ref(false)
 const tenantToDelete = ref<Tenant | null>(null)
+const dataTableRef = ref()
 
 // Headers de la tabla
 const headers = [
@@ -182,7 +147,7 @@ const closeDialog = () => {
 // Manejar tenant guardado
 const handleTenantSaved = async () => {
   closeDialog()
-  await refresh()
+  await dataTableRef.value?.refresh()
 }
 
 // Abrir dialog de eliminación
@@ -194,19 +159,13 @@ const openDeleteDialog = (tenant: Tenant) => {
 // Confirmar eliminación
 const confirmDelete = async () => {
   if (tenantToDelete.value) {
-    const success = await remove(tenantToDelete.value.id!)
+    const success = await dataTableRef.value?.deleteItem(tenantToDelete.value.id!)
     if (success) {
       deleteDialog.value = false
       tenantToDelete.value = null
     }
   }
 }
-
-// Inicializar datos al montar el componente
-onMounted(() => {
-  console.log('🚀 Montando TenantsListNew...')
-  initialize()
-})
 </script>
 
 <style scoped>

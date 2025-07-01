@@ -51,11 +51,9 @@ export function usePagination<T>(
   // Función para determinar el tamaño inicial de página
   const getInitialPageSize = () => {
     if (initialItemsPerPage) {
-      console.log(`📊 Usando tamaño inicial especificado: ${initialItemsPerPage}`)
       return initialItemsPerPage
     }
     const defaultSize = currentDefaultPageSize.value
-    console.log(`📊 Usando tamaño de página por defecto: ${defaultSize}`)
     return defaultSize
   }
 
@@ -71,6 +69,15 @@ export function usePagination<T>(
 
   // Cargar datos con paginación
   const loadData = async (options?: Partial<PaginationOptions>) => {
+    console.log('🔄 usePagination.loadData llamado con opciones:', options)
+    console.log('📊 Estado actual antes de cargar:', {
+      currentPage: currentPage.value,
+      itemsPerPage: itemsPerPage.value,
+      sortBy: sortBy.value,
+      sortOrder: sortOrder.value,
+      searchTerm: searchTerm.value
+    })
+    
     loading.value = true
     error.value = null
     
@@ -82,6 +89,14 @@ export function usePagination<T>(
       if (options?.sortOrder !== undefined) sortOrder.value = options.sortOrder
       if (options?.search !== undefined) searchTerm.value = options.search
 
+      console.log('📋 Opciones finales para servicio:', {
+        page: currentPage.value,
+        itemsPerPage: itemsPerPage.value,
+        sortBy: sortBy.value,
+        sortOrder: sortOrder.value,
+        search: searchTerm.value
+      })
+
       const result = await service.getPaginated({
         page: currentPage.value,
         itemsPerPage: itemsPerPage.value,
@@ -90,9 +105,17 @@ export function usePagination<T>(
         search: searchTerm.value
       })
 
+      console.log('📊 Resultado del servicio:', result)
+      
       items.value = result.data
       totalItems.value = result.total
+      
+      console.log('✅ Datos cargados exitosamente:', {
+        itemsCount: items.value.length,
+        totalItems: totalItems.value
+      })
     } catch (err: any) {
+      console.error('❌ Error en loadData:', err)
       error.value = err.message || 'Error al cargar datos'
       console.error('Error loading data:', err)
     } finally {
@@ -209,12 +232,26 @@ export function usePagination<T>(
 
   // Inicializar datos
   const initialize = async (options?: Partial<PaginationOptions>) => {
+    console.log('🚀 usePagination.initialize llamado con opciones:', options)
+    
     // Establecer el tamaño de página correcto al inicializar
     const correctPageSize = getInitialPageSize()
     itemsPerPage.value = correctPageSize
     console.log(`📊 Inicializando con tamaño de página: ${correctPageSize}`)
     
-    await loadData({ page: 1, itemsPerPage: correctPageSize, ...options })
+    console.log('📋 Opciones finales para inicialización:', {
+      page: 1,
+      itemsPerPage: correctPageSize,
+      ...options
+    })
+    
+    try {
+      await loadData({ page: 1, itemsPerPage: correctPageSize, ...options })
+      console.log('✅ Inicialización completada exitosamente')
+    } catch (error) {
+      console.error('❌ Error durante la inicialización:', error)
+      throw error
+    }
   }
 
   // Escuchar cambios de configuración de paginación desde Settings

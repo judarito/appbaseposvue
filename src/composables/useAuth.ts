@@ -24,18 +24,13 @@ export function useAuth() {
     return currentRole.value?.name === roleName
   })
 
-  // Watcher para sincronizar con cambios en la autenticación de Supabase
-  watch(authUser, async (newAuthUser) => {
-    if (newAuthUser && !currentUser.value) {
-      // Usuario autenticado pero sin información cargada, intentar cargar
-      console.log('🔄 Usuario autenticado detectado, cargando información...')
-      await loadUserInfo(newAuthUser.id)
-    } else if (!newAuthUser) {
-      // Usuario no autenticado, limpiar información
-      console.log('🧹 Usuario no autenticado, limpiando información...')
-      clearUserInfo()
-    }
-  }, { immediate: true })
+  // Función para limpiar la información del usuario
+  const clearUserInfo = () => {
+    console.log('🧹 Limpiando información del usuario...')
+    currentUser.value = null
+    userError.value = null
+    localStorage.removeItem('userInfo')
+  }
 
   // Función para cargar la información del usuario después del login
   const loadUserInfo = async (authUserId: string) => {
@@ -77,6 +72,19 @@ export function useAuth() {
       userLoading.value = false
     }
   }
+
+  // Watcher para sincronizar con cambios en la autenticación de Supabase
+  watch(authUser, async (newAuthUser) => {
+    if (newAuthUser && !currentUser.value) {
+      // Usuario autenticado pero sin información cargada, intentar cargar
+      console.log('🔄 Usuario autenticado detectado, cargando información...')
+      await loadUserInfo(newAuthUser.id)
+    } else if (!newAuthUser) {
+      // Usuario no autenticado, limpiar información
+      console.log('🧹 Usuario no autenticado, limpiando información...')
+      clearUserInfo()
+    }
+  }, { immediate: true })
 
   // Función para restaurar información del usuario desde localStorage
   const restoreUserInfo = async () => {
@@ -129,26 +137,6 @@ export function useAuth() {
     if (!authUser.value?.id) return
 
     await loadUserInfo(authUser.value.id)
-  }
-
-  // Función para limpiar la información del usuario (logout)
-  const clearUserInfo = () => {
-    console.log('🧹 Limpiando información del usuario...')
-    
-    // Limpiar estado reactivo
-    currentUser.value = null
-    userError.value = null
-    userLoading.value = false
-    
-    // Limpiar localStorage
-    try {
-      localStorage.removeItem('userInfo')
-      console.log('✅ localStorage limpiado')
-    } catch (error) {
-      console.warn('⚠️ Error limpiando localStorage:', error)
-    }
-    
-    console.log('✅ Información del usuario limpiada completamente')
   }
 
   // Función para hacer login
