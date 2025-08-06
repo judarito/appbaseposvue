@@ -7,6 +7,7 @@ import Products from '../views/Products.vue'
 import Reports from '../views/Reports.vue'
 import Settings from '../views/Settings.vue'
 import Tenants from '../views/Tenants.vue'
+import VentasChat from '../views/VentasChat.vue'
 
 const routes = [
   {
@@ -46,6 +47,12 @@ const routes = [
     path: '/reports',
     name: 'Reports',
     component: Reports,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/ventas-chat',
+    name: 'VentasChat',
+    component: VentasChat,
     meta: { requiresAuth: true }
   },
   {

@@ -28,3 +28,45 @@ export enum UserRole {
   TENANT_ADMIN = 'TENANT_ADMIN',
   USER = 'USER'
 }
+
+// Interfaces para VentasChat
+export interface VentaChat {
+  id?: number
+  user: string
+  productomsj: string
+  cantidad: number
+  preciounitario: number
+  fecha: string
+  comprador: string
+  estado: string
+  totalneto: number
+  created_at?: string
+  updated_at?: string
+}
+
+export interface CreateVentaChatData {
+  user: string
+  productomsj: string
+  cantidad: number
+  preciounitario: number
+  fecha: string
+  comprador: string
+  estado: string
+}
+
+export interface UpdateVentaChatData {
+  user?: string
+  productomsj?: string
+  cantidad?: number
+  preciounitario?: number
+  fecha?: string
+  comprador?: string
+  estado?: string
+}
+
+// Estados disponibles para VentasChat
+export enum EstadoVenta {
+  POR_PAGAR = 'POR PAGAR',
+  PAGO_PARCIAL = 'PAGO PARCIAL',
+  PAGADO = 'PAGADO'
+}

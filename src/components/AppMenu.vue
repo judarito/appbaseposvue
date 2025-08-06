@@ -67,6 +67,7 @@ const menuItems: MenuItem[] = [
   { title: 'Dashboard', icon: 'mdi-view-dashboard', route: '/' },
   { title: 'Usuarios', icon: 'mdi-account-group', route: '/users' },
   { title: 'Productos', icon: 'mdi-package-variant', route: '/products' },
+  { title: 'Ventas Chat', icon: 'mdi-cart', route: '/ventas-chat' },
   { title: 'Tenants', icon: 'mdi-domain', route: '/tenants', requiredRole: 'SUPERADMIN' },
   { title: 'Reportes', icon: 'mdi-chart-bar', route: '/reports' },
   { title: 'Configuración', icon: 'mdi-cog', route: '/settings' },

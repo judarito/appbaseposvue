@@ -111,7 +111,7 @@ const showUserNotFoundError = ref(false)
 // Datos de ejemplo para las estadísticas
 const stats = ref<DashboardStat[]>([
   { title: 'Usuarios', value: '1,234', icon: 'mdi-account-group', route: '/users' },
-  { title: 'Ventas', value: '$45,678', icon: 'mdi-currency-usd', route: '/reports' },
+  { title: 'Ventas Chat', value: '89', icon: 'mdi-cart', route: '/ventas-chat' },
   { title: 'Productos', value: '567', icon: 'mdi-package-variant', route: '/products' },
   { title: 'Tenants', value: '0', icon: 'mdi-domain', route: '/tenants', requiredRole: 'SUPERADMIN' },
 ])
