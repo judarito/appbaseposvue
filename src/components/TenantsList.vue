@@ -2,7 +2,7 @@
   <div class="pa-2 pa-sm-4">
     <h1 class="text-h5 text-sm-h4 mb-4">Gestión de Tenants</h1>
     
-    <DataTableSelfContained
+    <DataListView
       title="Administrar Tenants"
       icon="mdi-domain"
       :headers="headers"
@@ -19,8 +19,9 @@
           color="primary"
           prepend-icon="mdi-plus"
           @click="openCreateDialog"
+          :size="$vuetify.display.xs ? 'small' : 'default'"
         >
-          Nuevo Tenant
+          <span class="d-none d-sm-inline">Nuevo </span>Tenant
         </v-btn>
       </template>
 
@@ -58,7 +59,51 @@
           />
         </div>
       </template>
-    </DataTableSelfContained>
+
+      <!-- Slot personalizado para vista móvil -->
+      <template #mobile-item="{ item }">
+        <div class="mobile-tenant-card">
+          <!-- Header de la tarjeta -->
+          <div class="d-flex align-center justify-space-between mb-3">
+            <div class="d-flex align-center">
+              <v-avatar size="40" color="primary" class="mr-3">
+                <v-icon color="white">mdi-domain</v-icon>
+              </v-avatar>
+              <div>
+                <h3 class="text-h6 font-weight-bold">{{ item.name }}</h3>
+                <p class="text-caption text-medium-emphasis mb-0">
+                  {{ formatDate(item.created_at) }}
+                </p>
+              </div>
+            </div>
+            
+            <!-- Acciones en móvil -->
+            <div class="d-flex gap-1">
+              <v-btn
+                icon="mdi-pencil"
+                size="small"
+                variant="text"
+                color="primary"
+                @click="openEditDialog(item)"
+              />
+              <v-btn
+                icon="mdi-delete"
+                size="small"
+                variant="text"
+                color="error"
+                @click="openDeleteDialog(item)"
+              />
+            </div>
+          </div>
+          
+          <!-- Información adicional -->
+          <v-chip color="success" variant="tonal" size="small">
+            <v-icon start size="16">mdi-check-circle</v-icon>
+            Activo
+          </v-chip>
+        </div>
+      </template>
+    </DataListView>
 
     <!-- Dialog para crear/editar tenant -->
     <TenantDialog
@@ -97,7 +142,7 @@
 import { ref } from 'vue'
 import { tenantService, tenantServicePaginated } from '../services/tenantService'
 import type { Tenant, CreateTenantData, UpdateTenantData } from '../services/tenantService'
-import DataTableSelfContained from './DataTableSelfContained.vue'
+import DataListView from './DataListView.vue'
 import TenantDialog from './TenantDialog.vue'
 
 // Estado local para dialogs
@@ -171,5 +216,32 @@ const confirmDelete = async () => {
 </script>
 
 <style scoped>
-/* Estilos específicos del componente si es necesario */
+/* Estilos para la tarjeta móvil personalizada */
+.mobile-tenant-card {
+  width: 100%;
+}
+
+.mobile-tenant-card .text-h6 {
+  line-height: 1.2;
+}
+
+.mobile-tenant-card .text-caption {
+  line-height: 1.1;
+}
+
+/* Mejorar el espaciado en móvil */
+@media (max-width: 600px) {
+  .pa-2 {
+    padding: 8px !important;
+  }
+  
+  .text-h5 {
+    font-size: 1.25rem !important;
+  }
+}
+
+/* Asegurar que las acciones en móvil estén bien alineadas */
+.mobile-tenant-card .d-flex.gap-1 {
+  gap: 4px;
+}
 </style>

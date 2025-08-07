@@ -1,5 +1,5 @@
 <template>
-  <DataTableSelfContained
+  <DataListView
     :service="ventasChatServicePaginated"
     title="Gestión de Ventas Chat"
     icon="mdi-cart"
@@ -131,7 +131,124 @@
         />
       </div>
     </template>
-  </DataTableSelfContained>
+
+    <!-- Slot personalizado para vista móvil -->
+    <template #mobile-item="{ item }">
+      <div class="mobile-venta-card">
+        <!-- Header de la tarjeta -->
+        <div class="d-flex align-center justify-space-between mb-3">
+          <div class="d-flex align-center">
+            <v-avatar size="40" color="primary" class="mr-3">
+              <v-icon color="white">mdi-account</v-icon>
+            </v-avatar>
+            <div>
+              <h3 class="text-subtitle-1 font-weight-bold">{{ item.user }}</h3>
+              <p class="text-caption text-medium-emphasis mb-0">
+                ID: {{ item.id }}
+              </p>
+            </div>
+          </div>
+          
+          <!-- Estado con edición inline en móvil -->
+          <v-select
+            :model-value="item.estado"
+            :items="estadoOptions"
+            @update:model-value="(value: any) => updateEstado(item, value)"
+            density="compact"
+            variant="outlined"
+            hide-details
+            class="estado-editable-mobile"
+            style="max-width: 140px;"
+          >
+            <template #selection="{ item: estadoItem }">
+              <v-chip 
+                :color="getEstadoColor(estadoItem.value)" 
+                variant="tonal" 
+                size="small"
+              >
+                {{ estadoItem.title }}
+              </v-chip>
+            </template>
+            <template #item="{ props, item: estadoItem }">
+              <v-list-item v-bind="props">
+                <template #prepend>
+                  <v-chip 
+                    :color="getEstadoColor(estadoItem.value)" 
+                    variant="tonal" 
+                    size="small"
+                  >
+                    {{ estadoItem.title }}
+                  </v-chip>
+                </template>
+              </v-list-item>
+            </template>
+          </v-select>
+        </div>
+        
+        <!-- Información del producto -->
+        <div class="mb-3">
+          <v-card variant="tonal" color="info" class="pa-3">
+            <p class="text-subtitle-2 mb-1">Producto/Mensaje:</p>
+            <p class="text-body-2 mb-0">{{ item.productomsj }}</p>
+          </v-card>
+        </div>
+        
+        <!-- Detalles financieros -->
+        <div class="d-flex justify-space-between align-center mb-3">
+          <div class="text-center">
+            <p class="text-caption text-medium-emphasis">Cantidad</p>
+            <v-chip color="info" variant="tonal" size="small">
+              {{ item.cantidad }}
+            </v-chip>
+          </div>
+          <div class="text-center">
+            <p class="text-caption text-medium-emphasis">Precio Unit.</p>
+            <v-text-field
+              :model-value="item.preciounitario"
+              @blur="(event: any) => updatePrecioUnitario(item, event)"
+              type="number"
+              step="0.01"
+              min="0"
+              density="compact"
+              variant="outlined"
+              hide-details
+              class="precio-editable-mobile"
+              style="max-width: 100px;"
+            />
+          </div>
+          <div class="text-center">
+            <p class="text-caption text-medium-emphasis">Total</p>
+            <v-chip color="success" variant="tonal" size="small">
+              ${{ (item.cantidad * item.preciounitario).toFixed(2) }}
+            </v-chip>
+          </div>
+        </div>
+        
+        <!-- Fecha -->
+        <div class="d-flex justify-space-between align-center">
+          <span class="text-caption">{{ formatDate(item.fecha) }}</span>
+          
+          <!-- Acciones -->
+          <div class="d-flex gap-1">
+            <v-btn
+              icon="mdi-pencil"
+              size="small"
+              variant="text"
+              color="primary"
+              @click="openEditDialog(item)"
+            />
+            <v-btn
+              icon="mdi-delete"
+              size="small"
+              variant="text"
+              color="error"
+              @click="openDeleteDialog(item)"
+            />
+          </div>
+        </div>
+      </div>
+    </template>
+  </DataListView>
 
   <!-- Dialog para crear/editar venta -->
   <VentaChatDialog
@@ -175,7 +292,7 @@
 import { ref } from 'vue'
 import { ventasChatService, ventasChatServicePaginated } from '../services/ventasChatService'
 import type { VentaChat } from '../types'
-import DataTableSelfContained from './DataTableSelfContained.vue'
+import DataListView from './DataListView.vue'
 import VentaChatDialog from './VentaChatDialog.vue'
 
 // Emits
@@ -422,5 +539,40 @@ const updateEstado = async (item: VentaChat, newEstado: string) => {
 
 .estado-editable :deep(.v-list-item:hover) {
   background-color: rgba(var(--v-theme-primary), 0.08);
+}
+
+/* Estilos para vista móvil */
+.mobile-venta-card {
+  width: 100%;
+}
+
+.mobile-venta-card .text-subtitle-1 {
+  line-height: 1.2;
+}
+
+.estado-editable-mobile :deep(.v-field__input) {
+  padding: 4px 8px;
+  min-height: 32px;
+}
+
+.precio-editable-mobile :deep(.v-field__input) {
+  padding: 4px 8px;
+  min-height: 32px;
+  text-align: center;
+}
+
+/* Mejorar espaciado en tarjetas móviles */
+@media (max-width: 600px) {
+  .mobile-venta-card .d-flex.gap-1 {
+    gap: 4px;
+  }
+  
+  .mobile-venta-card .v-card {
+    border-radius: 8px;
+  }
+  
+  .mobile-venta-card .text-caption {
+    font-size: 0.75rem;
+  }
 }
 </style>
