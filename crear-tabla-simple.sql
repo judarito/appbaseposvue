@@ -3,12 +3,11 @@
 
 CREATE TABLE IF NOT EXISTS "VentasChat" (
     id SERIAL PRIMARY KEY,
-    "user" VARCHAR(255) NOT NULL,
+    comprador VARCHAR(255) NOT NULL,
     productomsj TEXT NOT NULL,
     cantidad NUMERIC(10,2) NOT NULL DEFAULT 0,
     preciounitario NUMERIC(10,2) NOT NULL DEFAULT 0,
     fecha DATE NOT NULL DEFAULT CURRENT_DATE,
-    comprador VARCHAR(255) NOT NULL,
     estado VARCHAR(50) NOT NULL DEFAULT 'POR PAGAR',
     totalneto NUMERIC(10,2) NOT NULL DEFAULT 0,
     created_at TIMESTAMPTZ DEFAULT NOW(),

@@ -21,13 +21,13 @@
       </v-btn>
     </template>
 
-    <!-- Slot personalizado para la columna de usuario -->
-    <template #item.user="{ item }">
+    <!-- Slot personalizado para la columna de comprador -->
+    <template #item.comprador="{ item }">
       <div class="d-flex align-center">
         <v-avatar size="32" color="primary" class="mr-3">
           <v-icon color="white">mdi-account</v-icon>
         </v-avatar>
-        <span class="font-weight-medium">{{ item.user }}</span>
+        <span class="font-weight-medium">{{ item.comprador }}</span>
       </div>
     </template>
 
@@ -142,9 +142,9 @@
               <v-icon color="white">mdi-account</v-icon>
             </v-avatar>
             <div>
-              <h3 class="text-subtitle-1 font-weight-bold">{{ item.user }}</h3>
+              <h3 class="text-subtitle-1 font-weight-bold">{{ item.comprador }}</h3>
               <p class="text-caption text-medium-emphasis mb-0">
-                ID: {{ item.id }}
+                Comprador - ID: {{ item.id }}
               </p>
             </div>
           </div>
@@ -320,13 +320,12 @@ const estadoOptions = [
 
 // Headers de la tabla
 const headers = [
-  { title: 'Usuario', key: 'user', align: 'start' as const, sortable: true },
+  { title: 'Comprador', key: 'comprador', align: 'start' as const, sortable: true },
   { title: 'Producto/Mensaje', key: 'productomsj', align: 'start' as const, sortable: true },
   { title: 'Cantidad', key: 'cantidad', align: 'center' as const, sortable: true, width: '100px' },
   { title: 'Precio Unit.', key: 'preciounitario', align: 'end' as const, sortable: true, width: '120px' },
   { title: 'Total Neto', key: 'totalneto', align: 'end' as const, sortable: true, width: '120px' },
   { title: 'Fecha', key: 'fecha', align: 'center' as const, sortable: true, width: '110px' },
-  { title: 'Comprador', key: 'comprador', align: 'start' as const, sortable: true },
   { title: 'Estado', key: 'estado', align: 'center' as const, sortable: true, width: '140px' },
   { title: 'Acciones', key: 'actions', align: 'center' as const, sortable: false, width: '100px' }
 ]

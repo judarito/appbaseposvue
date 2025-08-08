@@ -32,12 +32,11 @@ export enum UserRole {
 // Interfaces para VentasChat
 export interface VentaChat {
   id?: number
-  user: string
+  comprador: string
   productomsj: string
   cantidad: number
   preciounitario: number
   fecha: string
-  comprador: string
   estado: string
   totalneto: number
   created_at?: string
@@ -45,22 +44,20 @@ export interface VentaChat {
 }
 
 export interface CreateVentaChatData {
-  user: string
+  comprador: string
   productomsj: string
   cantidad: number
   preciounitario: number
   fecha: string
-  comprador: string
   estado: string
 }
 
 export interface UpdateVentaChatData {
-  user?: string
+  comprador?: string
   productomsj?: string
   cantidad?: number
   preciounitario?: number
   fecha?: string
-  comprador?: string
   estado?: string
 }
 
